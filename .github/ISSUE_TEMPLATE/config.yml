@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/AiPulseInc/raynet-mcp-server/wiki
+    about: Check the documentation for guides and references
+  - name: 💬 Discussions
+    url: https://github.com/AiPulseInc/raynet-mcp-server/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 📋 Implementation Plan
+    url: https://github.com/AiPulseInc/raynet-mcp-server/blob/main/raynet-mcp-implementation-plan.md
+    about: View the detailed implementation roadmap

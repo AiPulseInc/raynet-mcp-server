@@ -1,0 +1,110 @@
+name: 📋 Sprint Task
+description: Create a new sprint task for development
+title: "[SPRINT-X] "
+labels: ["sprint-task", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for contributing to Raynet MCP Server! Please fill out the task details below.
+
+  - type: dropdown
+    id: sprint
+    attributes:
+      label: Sprint
+      description: Which sprint does this task belong to?
+      options:
+        - Sprint 0 - Setup (Days 1-2)
+        - Sprint 0.5 - Discovery (Day 3)
+        - Sprint 1 - Infrastructure (Days 4-6)
+        - Sprint 2 - Companies (Days 7-10)
+        - Sprint 3 - Contacts (Days 11-14)
+        - Sprint 4 - Deals (Days 15-18)
+        - Sprint 5 - Integration (Days 19-23)
+        - Sprint 6 - Production (Days 24-26)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this task?
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Story Points
+      description: Estimated effort (Fibonacci scale)
+      options:
+        - "1 - Very small"
+        - "2 - Small"
+        - "3 - Medium"
+        - "5 - Large"
+        - "8 - Very large"
+        - "13 - Huge (consider splitting)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Task Description
+      description: What needs to be done?
+      placeholder: Describe the task clearly and concisely
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: How will we know this task is complete?
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] All tests pass
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical-notes
+    attributes:
+      label: Technical Notes
+      description: Any technical details, dependencies, or implementation notes
+      placeholder: |
+        - Dependencies: Issue #123
+        - Related files: src/api/client.ts
+        - Notes: Use Zod for validation
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing Requirements
+      description: What tests are needed?
+      placeholder: |
+        - Unit tests for X
+        - Integration test for Y
+        - Manual testing steps
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Implementation Checklist
+      description: Steps to complete this task
+      options:
+        - label: Code implementation
+        - label: Unit tests written
+        - label: Integration tests written (if applicable)
+        - label: Documentation updated
+        - label: Code reviewed
+        - label: Merged to main
