@@ -1,0 +1,52 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment files (should be set via Railway)
+.env
+.env.*
+!.env.example
+
+# Test files
+tests
+coverage
+*.test.ts
+*.spec.ts
+vitest.config.ts
+vitest.integration.config.ts
+
+# Documentation
+*.md
+!README.md
+docs
+
+# Development files
+.eslintrc*
+eslint.config.mjs
+.prettierrc
+.prettierignore
+tsconfig.eslint.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Miscellaneous
+test-*.js
+*.tgz

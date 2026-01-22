@@ -1,0 +1,34 @@
+# Railway Deployment Configuration
+# https://docs.railway.app/reference/config-as-code
+
+[build]
+# Use Nixpacks (Railway's default builder)
+builder = "nixpacks"
+
+[build.nixpacksPlan]
+providers = ["node"]
+
+[build.nixpacksPlan.phases.install]
+cmds = ["npm ci"]
+
+[build.nixpacksPlan.phases.build]
+cmds = ["npm run build"]
+
+[deploy]
+# Start command
+startCommand = "npm run start"
+
+# Number of replicas (free tier = 1)
+numReplicas = 1
+
+# Health check endpoint (will be added in Sprint 1)
+# healthcheckPath = "/health"
+# healthcheckTimeout = 30
+
+# Restart policy
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[deploy.runtimeOptions]
+# Node.js options
+nodeVersion = "20"
