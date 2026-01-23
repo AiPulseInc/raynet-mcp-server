@@ -71,6 +71,20 @@ export {
   handleGetLeadStats,
 } from './leads';
 
+// Enum tools
+export {
+  enumToolDefinitions,
+  handleEnumTool,
+  handleGetCompanyCategories,
+  handleGetCompanyTurnovers,
+  handleGetDealCategories,
+  handleGetDealPhases,
+  handleGetLeadPhases,
+  handleGetContactSources,
+  handleGetCurrencies,
+  handleGetAllEnums,
+} from './enums';
+
 // All tool definitions
 export const allToolDefinitions = [
   ...require('./companies').companyToolDefinitions,
@@ -78,6 +92,7 @@ export const allToolDefinitions = [
   ...require('./deals').dealToolDefinitions,
   ...require('./activities').activityToolDefinitions,
   ...require('./leads').leadToolDefinitions,
+  ...require('./enums').enumToolDefinitions,
 ];
 
 // Tool handler router
@@ -119,6 +134,19 @@ export async function handleTool(
   if (toolName.startsWith('raynet_') && (toolName.includes('lead') || toolName.includes('convert'))) {
     const { handleLeadTool } = require('./leads');
     return handleLeadTool(toolName, args);
+  }
+
+  // Enum tools
+  if (toolName.startsWith('raynet_get_') && (
+    toolName.includes('categor') ||
+    toolName.includes('turnover') ||
+    toolName.includes('phase') ||
+    toolName.includes('source') ||
+    toolName.includes('currenc') ||
+    toolName.includes('enum')
+  )) {
+    const { handleEnumTool } = require('./enums');
+    return handleEnumTool(toolName, args);
   }
 
   // Unknown tool
