@@ -6,9 +6,10 @@
 
 import { z } from 'zod';
 import { getCompaniesService } from '../api/companies';
+import { getContactsService } from '../api/contacts';
 import { logger } from '../utils/logger';
 import { getPolishErrorMessage } from '../utils/errors';
-import type { RaynetCompany } from '../types';
+import type { RaynetCompany, RaynetPerson } from '../types';
 
 // ============================================================================
 // Utility Functions
@@ -173,7 +174,7 @@ export const companyToolDefinitions = [
   {
     name: 'raynet_get_company',
     description:
-      'Pobiera szczegółowe informacje o firmie na podstawie jej ID. Zwraca pełne dane firmy włącznie z adresami i danymi kontaktowymi.',
+      'Pobiera szczegółowe informacje o firmie na podstawie jej ID. Zwraca pełne dane firmy włącznie z adresami, danymi kontaktowymi oraz listą powiązanych osób kontaktowych.',
     inputSchema: {
       type: 'object' as const,
       properties: {
@@ -386,6 +387,40 @@ function formatRole(role: string): string {
 }
 
 /**
+ * Format contact person for company output
+ */
+function formatContactPerson(contact: RaynetPerson): string {
+  const fullName = [
+    contact.titleBefore,
+    contact.firstName,
+    contact.lastName,
+    contact.titleAfter,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const parts = [`  - **${fullName}**`];
+
+  if (contact.primaryRelationship?.type) {
+    parts.push(`(${contact.primaryRelationship.type})`);
+  }
+
+  const contactDetails: string[] = [];
+  if (contact.contactInfo?.email) {
+    contactDetails.push(`Email: ${contact.contactInfo.email}`);
+  }
+  if (contact.contactInfo?.tel1) {
+    contactDetails.push(`Tel: ${contact.contactInfo.tel1}`);
+  }
+
+  if (contactDetails.length > 0) {
+    parts.push(`- ${contactDetails.join(', ')}`);
+  }
+
+  return parts.join(' ');
+}
+
+/**
  * Handle list companies tool
  */
 export async function handleListCompanies(
@@ -486,14 +521,31 @@ export async function handleGetCompany(
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   try {
     const input = GetCompanySchema.parse(args);
-    const service = getCompaniesService();
-    const result = await service.get(input);
+    const companiesService = getCompaniesService();
+    const contactsService = getContactsService();
+
+    // Fetch company details and linked contacts in parallel
+    const [companyResult, contactsResult] = await Promise.all([
+      companiesService.get(input),
+      contactsService.list({ companyId: input.companyId, limit: 50 }),
+    ]);
+
+    // Format company info
+    let output = formatCompany(companyResult.company);
+
+    // Add linked contacts section
+    if (contactsResult.contacts.length > 0) {
+      const contactsList = contactsResult.contacts.map(formatContactPerson).join('\n');
+      output += `\n\n**Osoby kontaktowe (${contactsResult.contacts.length}):**\n${contactsList}`;
+    } else {
+      output += '\n\n**Osoby kontaktowe:** Brak przypisanych kontaktów';
+    }
 
     return {
       content: [
         {
           type: 'text',
-          text: formatCompany(result.company),
+          text: output,
         },
       ],
     };
@@ -565,11 +617,13 @@ export async function handleUpdateCompany(
     };
   } catch (error) {
     logger.error('Error in handleUpdateCompany', { error });
+    const errorMessage = getPolishErrorMessage(error);
+    const errorDetails = error instanceof Error ? error.message : String(error);
     return {
       content: [
         {
           type: 'text',
-          text: `Błąd: ${getPolishErrorMessage(error)}`,
+          text: `Błąd: ${errorMessage}\n\nSzczegóły: ${errorDetails}`,
         },
       ],
     };

@@ -116,7 +116,7 @@ export class DealsService {
     const params: DealQueryParams = {
       limit,
       offset,
-      'name[LIKE]': `%${query}%`,
+      fulltext: query,
     };
 
     logger.info('Searching deals', { query, limit, offset });
@@ -256,8 +256,14 @@ export class DealsService {
       throw new ValidationError(['Nie podano żadnych zmian do zapisania']);
     }
 
+    // First, fetch the current deal to get the _version for optimistic locking
+    const currentDeal = await this.client.getOne<RaynetBusinessCase>(`${this.endpoint}/${dealId}/`);
+    const version = currentDeal.data._version;
+
     // Build payload with only provided fields
-    const payload: Partial<DealPayload> = {};
+    const payload: Partial<DealPayload> & { _version: number } = {
+      _version: version,
+    };
 
     if (updates.name !== undefined) payload.name = updates.name.trim();
     if (updates.totalAmount !== undefined) payload.totalAmount = updates.totalAmount;
@@ -268,17 +274,23 @@ export class DealsService {
     if (updates.description !== undefined) payload.description = updates.description;
     if (updates.tags !== undefined) payload.tags = updates.tags;
 
-    logger.info('Updating deal', { dealId, updates: Object.keys(payload) });
+    logger.info('Updating deal', { dealId, version, updates: Object.keys(payload) });
 
     try {
-      const response = await this.client.put<RaynetBusinessCase>(
+      // POST returns minimal response, so we just check for success
+      await this.client.post<RaynetBusinessCase>(
         `${this.endpoint}/${dealId}/`,
         payload
       );
 
-      logger.info('Deal updated', { dealId, name: response.data.name });
+      // Fetch the updated deal to return current data
+      const updatedDeal = await this.client.getOne<RaynetBusinessCase>(
+        `${this.endpoint}/${dealId}/`
+      );
 
-      return { deal: response.data };
+      logger.info('Deal updated', { dealId, name: updatedDeal.data.name });
+
+      return { deal: updatedDeal.data };
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw new NotFoundError('szansy sprzedaży', dealId);

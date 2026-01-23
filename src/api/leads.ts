@@ -123,11 +123,10 @@ export class LeadsService {
       throw new ValidationError(['Zapytanie wyszukiwania nie może być puste']);
     }
 
-    // Search by lastName (topic filter not supported)
     const params: LeadQueryParams = {
       limit,
       offset,
-      'lastName[LIKE]': `%${query}%`,
+      fulltext: query,
     };
 
     logger.info('Searching leads', { query, limit, offset });
@@ -256,8 +255,14 @@ export class LeadsService {
       throw new ValidationError(['Nie podano żadnych zmian do zapisania']);
     }
 
+    // First, fetch the current lead to get the _version for optimistic locking
+    const currentLead = await this.client.getOne<RaynetLead>(`${this.endpoint}/${leadId}/`);
+    const version = currentLead.data._version;
+
     // Build payload with only provided fields
-    const payload: Partial<LeadPayload> = {};
+    const payload: Partial<LeadPayload> & { _version: number } = {
+      _version: version,
+    };
 
     if (updates.topic !== undefined) payload.topic = updates.topic.trim();
     if (updates.firstName !== undefined) payload.firstName = updates.firstName;
@@ -277,17 +282,23 @@ export class LeadsService {
       if (updates.website !== undefined) payload.contactInfo.www = updates.website;
     }
 
-    logger.info('Updating lead', { leadId, updates: Object.keys(payload) });
+    logger.info('Updating lead', { leadId, version, updates: Object.keys(payload) });
 
     try {
-      const response = await this.client.put<RaynetLead>(
+      // POST returns minimal response, so we just check for success
+      await this.client.post<RaynetLead>(
         `${this.endpoint}/${leadId}/`,
         payload
       );
 
-      logger.info('Lead updated', { leadId, topic: response.data.topic });
+      // Fetch the updated lead to return current data
+      const updatedLead = await this.client.getOne<RaynetLead>(
+        `${this.endpoint}/${leadId}/`
+      );
 
-      return { lead: response.data };
+      logger.info('Lead updated', { leadId, topic: updatedLead.data.topic });
+
+      return { lead: updatedLead.data };
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw new NotFoundError('leada', leadId);

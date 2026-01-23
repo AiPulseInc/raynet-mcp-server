@@ -206,7 +206,7 @@ export class ActivitiesService {
       try {
         const response = await this.client.getList<RaynetActivity>(
           `${this.getEndpoint(type)}/`,
-          { 'title[LIKE]': `%${query}%`, limit: 50 }
+          { fulltext: query, limit: 50 }
         );
         allActivities.push(...response.data);
         totalCount += response.totalCount;
@@ -361,8 +361,14 @@ export class ActivitiesService {
       throw new ValidationError(['Nie podano żadnych zmian do zapisania']);
     }
 
+    // First, fetch the current activity to get the _version for optimistic locking
+    const currentActivity = await this.client.getOne<RaynetActivity>(`${this.getEndpoint(activityType)}/${activityId}/`);
+    const version = currentActivity.data._version;
+
     // Build payload with only provided fields
-    const payload: Partial<ActivityPayload> = {};
+    const payload: Partial<ActivityPayload> & { _version: number } = {
+      _version: version,
+    };
 
     if (updates.title !== undefined) payload.title = updates.title.trim();
     if (updates.scheduledFrom !== undefined) payload.scheduledFrom = updates.scheduledFrom;
@@ -371,17 +377,23 @@ export class ActivitiesService {
     if (updates.priority !== undefined) payload.priority = updates.priority;
     if (updates.status !== undefined) payload.status = updates.status;
 
-    logger.info('Updating activity', { activityId, activityType, updates: Object.keys(payload) });
+    logger.info('Updating activity', { activityId, activityType, version, updates: Object.keys(payload) });
 
     try {
-      const response = await this.client.put<RaynetActivity>(
+      // POST returns minimal response, so we just check for success
+      await this.client.post<RaynetActivity>(
         `${this.getEndpoint(activityType)}/${activityId}/`,
         payload
       );
 
-      logger.info('Activity updated', { activityId, title: response.data.title });
+      // Fetch the updated activity to return current data
+      const updatedActivity = await this.client.getOne<RaynetActivity>(
+        `${this.getEndpoint(activityType)}/${activityId}/`
+      );
 
-      return { activity: response.data };
+      logger.info('Activity updated', { activityId, title: updatedActivity.data.title });
+
+      return { activity: updatedActivity.data };
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw new NotFoundError(ACTIVITY_NAMES_PL[activityType], activityId);
@@ -400,9 +412,14 @@ export class ActivitiesService {
       throw new ValidationError(['ID aktywności musi być liczbą dodatnią']);
     }
 
-    logger.info('Completing activity', { activityId, activityType });
+    // First, fetch the current activity to get the _version for optimistic locking
+    const currentActivity = await this.client.getOne<RaynetActivity>(`${this.getEndpoint(activityType)}/${activityId}/`);
+    const version = currentActivity.data._version;
 
-    const payload: Partial<ActivityPayload> = {
+    logger.info('Completing activity', { activityId, activityType, version });
+
+    const payload: Partial<ActivityPayload> & { _version: number } = {
+      _version: version,
       status: 'COMPLETED',
     };
 
@@ -411,14 +428,20 @@ export class ActivitiesService {
     }
 
     try {
-      const response = await this.client.put<RaynetActivity>(
+      // POST returns minimal response, so we just check for success
+      await this.client.post<RaynetActivity>(
         `${this.getEndpoint(activityType)}/${activityId}/`,
         payload
       );
 
-      logger.info('Activity completed', { activityId, title: response.data.title });
+      // Fetch the updated activity to return current data
+      const updatedActivity = await this.client.getOne<RaynetActivity>(
+        `${this.getEndpoint(activityType)}/${activityId}/`
+      );
 
-      return { activity: response.data };
+      logger.info('Activity completed', { activityId, title: updatedActivity.data.title });
+
+      return { activity: updatedActivity.data };
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw new NotFoundError(ACTIVITY_NAMES_PL[activityType], activityId);
@@ -435,17 +458,27 @@ export class ActivitiesService {
       throw new ValidationError(['ID aktywności musi być liczbą dodatnią']);
     }
 
-    logger.info('Cancelling activity', { activityId, activityType });
+    // First, fetch the current activity to get the _version for optimistic locking
+    const currentActivity = await this.client.getOne<RaynetActivity>(`${this.getEndpoint(activityType)}/${activityId}/`);
+    const version = currentActivity.data._version;
+
+    logger.info('Cancelling activity', { activityId, activityType, version });
 
     try {
-      const response = await this.client.put<RaynetActivity>(
+      // POST returns minimal response, so we just check for success
+      await this.client.post<RaynetActivity>(
         `${this.getEndpoint(activityType)}/${activityId}/`,
-        { status: 'CANCELLED' }
+        { _version: version, status: 'CANCELLED' }
+      );
+
+      // Fetch the updated activity to return current data
+      const updatedActivity = await this.client.getOne<RaynetActivity>(
+        `${this.getEndpoint(activityType)}/${activityId}/`
       );
 
       logger.info('Activity cancelled', { activityId });
 
-      return { activity: response.data };
+      return { activity: updatedActivity.data };
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw new NotFoundError(ACTIVITY_NAMES_PL[activityType], activityId);

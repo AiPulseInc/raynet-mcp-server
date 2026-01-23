@@ -117,11 +117,10 @@ export class ContactsService {
       throw new ValidationError(['Zapytanie wyszukiwania nie może być puste']);
     }
 
-    // Search in lastName (most common search pattern)
     const params: ContactQueryParams = {
       limit,
       offset,
-      'lastName[LIKE]': `%${query}%`,
+      fulltext: query,
     };
 
     logger.info('Searching contacts', { query, limit, offset });
@@ -255,8 +254,14 @@ export class ContactsService {
       throw new ValidationError(['Nie podano żadnych zmian do zapisania']);
     }
 
+    // First, fetch the current contact to get the _version for optimistic locking
+    const currentContact = await this.client.getOne<RaynetPerson>(`${this.endpoint}/${contactId}/`);
+    const version = currentContact.data._version;
+
     // Build payload with only provided fields
-    const payload: Partial<ContactPayload> = {};
+    const payload: Partial<ContactPayload> & { _version: number } = {
+      _version: version,
+    };
 
     if (updates.firstName !== undefined) payload.firstName = updates.firstName.trim();
     if (updates.lastName !== undefined) payload.lastName = updates.lastName.trim();
@@ -272,20 +277,26 @@ export class ContactsService {
       if (updates.phone !== undefined) payload.contactInfo.tel1 = updates.phone;
     }
 
-    logger.info('Updating contact', { contactId, updates: Object.keys(payload) });
+    logger.info('Updating contact', { contactId, version, updates: Object.keys(payload) });
 
     try {
-      const response = await this.client.put<RaynetPerson>(
+      // POST returns minimal response, so we just check for success
+      await this.client.post<RaynetPerson>(
         `${this.endpoint}/${contactId}/`,
         payload
       );
 
+      // Fetch the updated contact to return current data
+      const updatedContact = await this.client.getOne<RaynetPerson>(
+        `${this.endpoint}/${contactId}/`
+      );
+
       logger.info('Contact updated', {
         contactId,
-        name: `${response.data.firstName} ${response.data.lastName}`
+        name: `${updatedContact.data.firstName} ${updatedContact.data.lastName}`
       });
 
-      return { contact: response.data };
+      return { contact: updatedContact.data };
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw new NotFoundError('kontaktu', contactId);

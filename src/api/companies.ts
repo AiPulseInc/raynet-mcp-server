@@ -129,7 +129,7 @@ export class CompaniesService {
     const params: CompanyQueryParams = {
       limit,
       offset,
-      'name[LIKE]': `%${query}%`,
+      fulltext: query,
     };
 
     logger.info('Searching companies', { query, limit, offset });
@@ -252,8 +252,14 @@ export class CompaniesService {
       throw new ValidationError(['Nie podano żadnych zmian do zapisania']);
     }
 
+    // First, fetch the current company to get the _version for optimistic locking
+    const currentCompany = await this.client.getOne<RaynetCompany>(`${this.endpoint}/${companyId}/`);
+    const version = currentCompany.data._version;
+
     // Build payload with only provided fields
-    const payload: Partial<CompanyPayload> = {};
+    const payload: Partial<CompanyPayload> & { _version: number } = {
+      _version: version,
+    };
 
     if (updates.name !== undefined) payload.name = updates.name.trim();
     if (updates.role !== undefined) payload.role = updates.role;
@@ -264,18 +270,25 @@ export class CompaniesService {
     if (updates.notice !== undefined) payload.notice = updates.notice;
     if (updates.tags !== undefined) payload.tags = updates.tags;
 
-    logger.info('Updating company', { companyId, updates: Object.keys(payload) });
+    logger.info('Updating company', { companyId, version, updates: Object.keys(payload), payload });
 
     try {
-      const response = await this.client.put<RaynetCompany>(
+      // POST returns minimal response, so we just check for success
+      await this.client.post<RaynetCompany>(
         `${this.endpoint}/${companyId}/`,
         payload
       );
 
-      logger.info('Company updated', { companyId, name: response.data.name });
+      // Fetch the updated company to return current data
+      const updatedCompany = await this.client.getOne<RaynetCompany>(
+        `${this.endpoint}/${companyId}/`
+      );
 
-      return { company: response.data };
+      logger.info('Company updated', { companyId, name: updatedCompany.data.name });
+
+      return { company: updatedCompany.data };
     } catch (error) {
+      logger.error('Company update failed', { companyId, payload, error });
       if (error instanceof NotFoundError) {
         throw new NotFoundError('firmy', companyId);
       }
