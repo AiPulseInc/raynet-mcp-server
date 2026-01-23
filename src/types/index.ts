@@ -1,5 +1,8 @@
 /**
  * Raynet MCP Server - Shared Type Definitions
+ *
+ * Based on API exploration performed 2026-01-22
+ * Instance: crm321grow (EU region)
  */
 
 // ============================================================================
@@ -44,10 +47,10 @@ export interface RaynetListResponse<T> {
 }
 
 export interface RaynetErrorResponse {
+  success: false;
   type: string;
   message: string;
   translatedMessage?: string;
-  status: number;
 }
 
 // ============================================================================
@@ -61,147 +64,373 @@ export interface RateLimitInfo {
 }
 
 // ============================================================================
-// Raynet Entity Types - Company (Account)
+// Raynet Shared/Reference Types
 // ============================================================================
 
-export interface RaynetCompany {
-  id: number;
-  name: string;
-  lastName?: string;
-  person?: boolean;
-  rating?: 'A' | 'B' | 'C' | 'D';
-  state?: 'A_POTENTIAL' | 'B_ACTUAL' | 'C_INVALID';
-  role?: 'A_SUBSCRIBER' | 'B_PARTNER' | 'C_COMPETITION' | 'D_SUPPLIER' | 'E_UNKNOWN';
-  regNumber?: string;
-  taxNumber?: string;
-  taxNumber2?: string;
-  bankAccount?: string;
-  taxPayer?: 'YES' | 'NO';
-  category?: RaynetReference;
-  owner?: RaynetReference;
-  economyActivity?: RaynetReference;
-  companyClassification1?: RaynetReference;
-  companyClassification2?: RaynetReference;
-  companyClassification3?: RaynetReference;
-  primaryAddress?: RaynetAddress;
-  notice?: string;
-  tags?: string[];
-  customFields?: Record<string, unknown>;
-  rowInfo?: RaynetRowInfo;
-}
-
-// ============================================================================
-// Raynet Entity Types - Person (Contact)
-// ============================================================================
-
-export interface RaynetPerson {
-  id: number;
-  firstName?: string;
-  lastName?: string;
-  titleBefore?: string;
-  titleAfter?: string;
-  salutation?: string;
-  birthday?: string;
-  language?: string;
-  category?: RaynetReference;
-  owner?: RaynetReference;
-  contactInfo?: RaynetContactInfo;
-  primaryRelationship?: RaynetPersonRelationship;
-  notice?: string;
-  tags?: string[];
-  customFields?: Record<string, unknown>;
-  rowInfo?: RaynetRowInfo;
-}
-
-export interface RaynetPersonRelationship {
-  id: number;
-  company?: RaynetReference;
-  primary?: boolean;
-  contactInfo?: RaynetContactInfo;
-}
-
-// ============================================================================
-// Raynet Entity Types - Business Case (Deal)
-// ============================================================================
-
-export interface RaynetBusinessCase {
-  id: number;
-  name: string;
-  company?: RaynetReference;
-  person?: RaynetReference;
-  owner?: RaynetReference;
-  businessCasePhase?: RaynetReference;
-  businessCaseType?: RaynetReference;
-  businessCaseSource?: RaynetReference;
-  price?: number;
-  probability?: number;
-  scheduledEnd?: string;
-  validFrom?: string;
-  validTill?: string;
-  description?: string;
-  notice?: string;
-  tags?: string[];
-  customFields?: Record<string, unknown>;
-  rowInfo?: RaynetRowInfo;
-}
-
-// ============================================================================
-// Raynet Shared Types
-// ============================================================================
-
+/** Minimal reference to a related entity */
 export interface RaynetReference {
   id: number;
   name?: string;
+  fullName?: string;
+  value?: string;
 }
 
-export interface RaynetAddress {
-  id?: number;
+/** Owner reference with fullName */
+export interface RaynetOwnerReference {
+  id: number;
+  fullName: string;
+}
+
+/** Security level reference */
+export interface RaynetSecurityLevel {
+  id: number;
+  name: string;
+}
+
+/** Currency reference */
+export interface RaynetCurrency {
+  id: number;
+  value: string; // e.g., "zł", "CZK", "EUR"
+}
+
+/** Row audit information */
+export interface RaynetRowInfo {
+  createdAt: string; // "2025-12-16 14:10"
+  createdBy: string; // email or "(unknown)"
+  updatedAt?: string | null;
+  updatedBy?: string | null;
+  rowAccess?: string | null;
+  rowState?: string | null;
+}
+
+// ============================================================================
+// Address and Contact Info Types
+// ============================================================================
+
+export interface RaynetAddressDetails {
+  id: number;
   name?: string;
   street?: string;
   city?: string;
   zipCode?: string;
   country?: string;
   countryCode?: string;
-  province?: string;
+  province?: string | null;
   lat?: number;
   lng?: number;
-  contactInfo?: RaynetContactInfo;
 }
 
 export interface RaynetContactInfo {
+  primary?: boolean;
   email?: string;
-  email2?: string;
-  tel1?: string;
-  tel1Type?: string;
-  tel2?: string;
-  tel2Type?: string;
-  www?: string;
-  fax?: string;
-  otherContact?: string;
+  email2?: string | null;
+  tel1?: string | null;
+  tel1Type?: string | null;
+  tel2?: string | null;
+  tel2Type?: string | null;
+  www?: string | null;
+  fax?: string | null;
+  otherContact?: string | null;
+  doNotSendMM?: boolean;
 }
 
-export interface RaynetRowInfo {
-  createdAt?: string;
-  createdBy?: RaynetReference;
-  updatedAt?: string;
-  updatedBy?: RaynetReference;
-  lastModifiedAt?: string;
-  rowAccess?: string;
+export interface RaynetCompanyAddress {
+  id: number;
+  primary: boolean;
+  contactAddress: boolean;
+  extIds?: Record<string, unknown> | null;
+  address: RaynetAddressDetails;
+  contactInfo: RaynetContactInfo;
+  territory?: RaynetReference | null;
+}
+
+export interface RaynetPrivateAddress {
+  city?: string | null;
+  country?: string | null;
+  countryCode?: string | null;
+  province?: string | null;
+  street?: string | null;
+  zipCode?: string | null;
+}
+
+export interface RaynetSocialNetworkContact {
+  facebook?: string | null;
+  googleplus?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
+  pinterest?: string | null;
+  instagram?: string | null;
+  skype?: string | null;
+  youtube?: string | null;
 }
 
 // ============================================================================
-// MCP Tool Input Types
+// File/Attachment Types
 // ============================================================================
 
-export interface SearchCompaniesInput {
-  query?: string;
+export interface RaynetFileInfo {
+  id: number;
+  contentType: string;
+  fileName: string;
+  size: number;
+}
+
+// ============================================================================
+// Company (Firma) Types
+// ============================================================================
+
+/** Company states */
+export type CompanyState = 'A_POTENTIAL' | 'B_ACTUAL' | 'C_DEFERRED' | 'D_ENDED';
+
+/** Company roles */
+export type CompanyRole = 'A_SUBSCRIBER' | 'B_PARTNER' | 'C_SUPPLIER' | 'D_RIVAL';
+
+/** Company/Contact ratings */
+export type Rating = 'A' | 'B' | 'C';
+
+export interface RaynetCompany {
+  id: number;
+  name: string;
+  person: boolean;
+  firstName?: string | null;
+  lastName?: string | null;
+  titleBefore?: string | null;
+  titleAfter?: string | null;
+  salutation?: string | null;
+  role: CompanyRole;
+  state: CompanyState;
+  rating: Rating;
+  owner: RaynetOwnerReference;
+  regNumber?: string;
+  taxNumber?: string;
+  taxNumber2?: string | null;
+  taxPayer?: string | null;
+  bankAccount?: string | null;
+  databox?: string | null;
+  court?: string | null;
+  birthday?: string;
+  notice?: string | null;
+  primaryAddress: RaynetCompanyAddress;
+  contactAddress: RaynetCompanyAddress;
+  category?: RaynetReference | null;
+  turnover?: RaynetReference | null;
+  economyActivity?: RaynetReference | null;
+  companyClassification1?: RaynetReference | null;
+  companyClassification2?: RaynetReference | null;
+  companyClassification3?: RaynetReference | null;
+  paymentTerm?: RaynetReference;
+  contactSource?: RaynetReference | null;
+  tags: string[];
+  customFields: Record<string, unknown>;
+  attachments?: RaynetFileInfo[] | null;
+  rowInfo: RaynetRowInfo;
+  securityLevel: RaynetSecurityLevel;
+  inlineGdpr: unknown[];
+  _version: number;
+  // Detail-only fields
+  employeesNumber?: RaynetReference | null;
+  legalForm?: RaynetReference | null;
+  logo?: RaynetFileInfo | null;
+  socialNetworkContact?: RaynetSocialNetworkContact;
+  originLead?: RaynetReference | null;
+  extIds?: Record<string, unknown> | null;
+  addresses?: RaynetCompanyAddress[];
+}
+
+// ============================================================================
+// Person/Contact (Kontakt) Types
+// ============================================================================
+
+export interface RaynetPersonRelationship {
+  id: number;
+  type: string;
+  company: RaynetReference;
+}
+
+export interface RaynetPerson {
+  id: number;
+  firstName: string;
+  lastName: string;
+  titleBefore?: string | null;
+  titleAfter?: string | null;
+  salutation?: string | null;
+  birthday?: string;
+  language?: RaynetReference | null;
+  maritalStatus?: RaynetReference | null;
+  gender?: string | null;
+  communicationTone?: string | null;
+  owner: RaynetOwnerReference;
+  category?: RaynetReference | null;
+  primaryRelationship: RaynetPersonRelationship;
+  personClassification1?: RaynetReference | null;
+  personClassification2?: RaynetReference | null;
+  personClassification3?: RaynetReference | null;
+  contactInfo: RaynetContactInfo;
+  privateAddress: RaynetPrivateAddress;
+  companyAddress?: {
+    address: RaynetAddressDetails;
+    territory?: RaynetReference | null;
+  };
+  notice?: string | null;
+  tags: string[];
+  customFields: Record<string, unknown>;
+  keyman: boolean;
+  activeUserAccount: boolean;
+  rowInfo: RaynetRowInfo;
+  securityLevel: RaynetSecurityLevel;
+  inlineGdpr: unknown[];
+  _version: number;
+  // Detail-only fields
+  photo?: RaynetFileInfo | null;
+  socialNetworkContact?: RaynetSocialNetworkContact;
+  originLead?: RaynetReference | null;
+  extIds?: Record<string, unknown> | null;
+  attachments?: RaynetFileInfo[];
+  relationships?: RaynetPersonRelationship[];
+}
+
+// ============================================================================
+// Business Case/Deal (Szansa sprzedaży) Types
+// ============================================================================
+
+/** Deal status */
+export type DealStatus = 'A_DRAFT' | 'B_ACTIVE' | 'C_WON' | 'D_LOST' | 'E_CANCELLED';
+
+export interface RaynetPhaseChange {
+  phase: RaynetReference;
+  changedAt: string;
+}
+
+export interface RaynetBusinessCase {
+  id: number;
+  code: string;
+  name: string;
+  status: DealStatus;
+  probability: number;
+  totalAmount: number;
+  totalAmountWithTax?: number; // Detail only
+  tradingProfit: number;
+  estimatedValue: number;
+  exchangeRate: number;
+  validFrom: string;
+  validTill?: string | null;
+  scheduledEnd?: string | null;
+  description?: string | null;
+  company: RaynetReference;
+  person?: RaynetReference | null;
+  owner: RaynetOwnerReference;
+  currency: RaynetCurrency;
+  businessCasePhase: RaynetReference;
+  businessCaseType: RaynetReference;
+  category?: RaynetReference | null;
+  project?: RaynetReference | null;
+  source?: RaynetReference | null;
+  businessCaseClassification1?: RaynetReference | null;
+  businessCaseClassification2?: RaynetReference | null;
+  businessCaseClassification3?: RaynetReference | null;
+  losingReason?: RaynetReference | null;
+  losingCategory?: RaynetReference | null;
+  phaseChanges: RaynetPhaseChange[];
+  tags: string[];
+  customFields: Record<string, unknown>;
+  rowInfo: RaynetRowInfo;
+  securityLevel: RaynetSecurityLevel;
+  _version: number;
+  // Detail-only fields
+  originalLead?: RaynetReference | null;
+  items?: unknown[];
+  signatures?: unknown[];
+  attachments?: RaynetFileInfo[];
+  extIds?: Record<string, unknown> | null;
+}
+
+// ============================================================================
+// Activity Types
+// ============================================================================
+
+/** Activity type (entity name) */
+export type ActivityType = 'PhoneCall' | 'Meeting' | 'Task' | 'Email';
+
+/** Activity status */
+export type ActivityStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
+
+/** Activity priority */
+export type ActivityPriority = 'LOW' | 'DEFAULT' | 'HIGH';
+
+export interface RaynetActivityParticipant {
+  id: number;
+  person?: RaynetReference;
+  company?: RaynetReference;
+}
+
+export interface RaynetActivity {
+  id: number;
+  _entityName: ActivityType;
+  title: string;
+  status: ActivityStatus;
+  priority: ActivityPriority;
+  personal: boolean;
+  scheduledFrom: string;
+  scheduledTill: string;
+  completed?: string | null;
+  description?: string | null;
+  solution?: string | null;
+  category?: RaynetReference | null;
+  activity?: RaynetReference | null;
+  company?: RaynetReference | null;
+  person?: RaynetReference | null;
+  lead?: RaynetReference | null;
+  project?: RaynetReference | null;
+  businessCase?: RaynetReference | null;
+  offer?: RaynetReference | null;
+  salesOrder?: RaynetReference | null;
+  participants: RaynetActivityParticipant[];
+  recurrence?: unknown | null;
+  tags: string[];
+  customFields: Record<string, unknown>;
+  rowInfo: RaynetRowInfo;
+  securityLevel: RaynetSecurityLevel;
+  _version: number;
+}
+
+// ============================================================================
+// Enum/Category Types
+// ============================================================================
+
+export interface RaynetCategory {
+  id: number;
+  code01: string;
+  code02?: string; // Color code for visual categories
+}
+
+export interface RaynetPhase {
+  id: number;
+  code01: string;
+}
+
+export interface RaynetTurnover {
+  id: number;
+  code01: string;
+}
+
+// ============================================================================
+// MCP Tool Input Types - Companies
+// ============================================================================
+
+export interface ListCompaniesInput {
   limit?: number;
   offset?: number;
-  rating?: string;
-  state?: string;
-  category?: number;
-  owner?: number;
-  tags?: string[];
+  state?: CompanyState;
+  role?: CompanyRole;
+  rating?: Rating;
+  ownerId?: number;
+  categoryId?: number;
+}
+
+export interface SearchCompaniesInput {
+  query: string;
+  limit?: number;
+  offset?: number;
 }
 
 export interface GetCompanyInput {
@@ -210,37 +439,55 @@ export interface GetCompanyInput {
 
 export interface CreateCompanyInput {
   name: string;
-  rating?: 'A' | 'B' | 'C' | 'D';
-  state?: 'A_POTENTIAL' | 'B_ACTUAL' | 'C_INVALID';
-  owner?: number;
-  category?: number;
+  role?: CompanyRole;
+  state?: CompanyState;
+  rating?: Rating;
+  ownerId?: number;
+  categoryId?: number;
   regNumber?: string;
   taxNumber?: string;
   notice?: string;
   tags?: string[];
+  address?: {
+    street?: string;
+    city?: string;
+    zipCode?: string;
+    country?: string;
+  };
+  contactInfo?: {
+    email?: string;
+    tel1?: string;
+    www?: string;
+  };
 }
 
 export interface UpdateCompanyInput {
   companyId: number;
   name?: string;
-  rating?: 'A' | 'B' | 'C' | 'D';
-  state?: 'A_POTENTIAL' | 'B_ACTUAL' | 'C_INVALID';
-  owner?: number;
-  category?: number;
+  role?: CompanyRole;
+  state?: CompanyState;
+  rating?: Rating;
+  ownerId?: number;
+  categoryId?: number;
   notice?: string;
   tags?: string[];
 }
 
-export interface DeleteCompanyInput {
-  companyId: number;
+// ============================================================================
+// MCP Tool Input Types - Contacts
+// ============================================================================
+
+export interface ListContactsInput {
+  limit?: number;
+  offset?: number;
+  companyId?: number;
+  ownerId?: number;
 }
 
 export interface SearchContactsInput {
-  query?: string;
-  companyId?: number;
+  query: string;
   limit?: number;
   offset?: number;
-  owner?: number;
 }
 
 export interface GetContactInput {
@@ -248,14 +495,17 @@ export interface GetContactInput {
 }
 
 export interface CreateContactInput {
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
   companyId?: number;
+  ownerId?: number;
   email?: string;
   phone?: string;
   titleBefore?: string;
   titleAfter?: string;
+  birthday?: string;
   notice?: string;
+  tags?: string[];
 }
 
 export interface UpdateContactInput {
@@ -264,24 +514,34 @@ export interface UpdateContactInput {
   lastName?: string;
   email?: string;
   phone?: string;
+  titleBefore?: string;
+  titleAfter?: string;
   notice?: string;
-}
-
-export interface DeleteContactInput {
-  contactId: number;
+  tags?: string[];
 }
 
 export interface LinkContactToCompanyInput {
   contactId: number;
   companyId: number;
+  relationshipType?: string;
   primary?: boolean;
 }
 
-export interface SearchDealsInput {
-  query?: string;
+// ============================================================================
+// MCP Tool Input Types - Deals
+// ============================================================================
+
+export interface ListDealsInput {
+  limit?: number;
+  offset?: number;
+  status?: DealStatus;
   companyId?: number;
-  owner?: number;
-  status?: string;
+  ownerId?: number;
+  phaseId?: number;
+}
+
+export interface SearchDealsInput {
+  query: string;
   limit?: number;
   offset?: number;
 }
@@ -292,25 +552,84 @@ export interface GetDealInput {
 
 export interface CreateDealInput {
   name: string;
-  companyId?: number;
+  companyId: number;
   contactId?: number;
-  owner?: number;
-  price?: number;
+  ownerId?: number;
+  totalAmount?: number;
   probability?: number;
+  phaseId?: number;
+  validFrom?: string;
   scheduledEnd?: string;
   description?: string;
+  tags?: string[];
 }
 
 export interface UpdateDealInput {
   dealId: number;
   name?: string;
-  price?: number;
+  totalAmount?: number;
   probability?: number;
+  phaseId?: number;
+  status?: DealStatus;
   scheduledEnd?: string;
   description?: string;
-  phaseId?: number;
+  tags?: string[];
 }
 
-export interface DeleteDealInput {
+export interface UpdateDealPhaseInput {
   dealId: number;
+  phaseId: number;
+}
+
+// ============================================================================
+// MCP Tool Input Types - Activities
+// ============================================================================
+
+export interface ListActivitiesInput {
+  limit?: number;
+  offset?: number;
+  companyId?: number;
+  contactId?: number;
+  dealId?: number;
+  status?: ActivityStatus;
+}
+
+export interface CreateActivityInput {
+  type: ActivityType;
+  title: string;
+  companyId?: number;
+  contactId?: number;
+  dealId?: number;
+  scheduledFrom: string;
+  scheduledTill: string;
+  description?: string;
+  priority?: ActivityPriority;
+}
+
+export interface CompleteActivityInput {
+  activityId: number;
+  activityType: ActivityType;
+  solution?: string;
+}
+
+// ============================================================================
+// Query Parameter Types
+// ============================================================================
+
+export interface PaginationParams {
+  limit?: number;
+  offset?: number;
+}
+
+export interface SortParams {
+  sortColumn?: string;
+  sortDirection?: 'ASC' | 'DESC';
+}
+
+export type FilterOperator = 'EQ' | 'LIKE' | 'GT' | 'GE' | 'LT' | 'LE';
+
+export interface FilterParam {
+  field: string;
+  operator: FilterOperator;
+  value: string | number;
 }

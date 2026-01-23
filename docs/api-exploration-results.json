@@ -1,0 +1,2713 @@
+{
+  "timestamp": "2026-01-22T21:56:52.027Z",
+  "instance": "crm321grow",
+  "endpoints": {
+    "company": {
+      "name": "Companies",
+      "endpoint": "/company/",
+      "timestamp": "2026-01-22T21:56:52.027Z",
+      "list": {
+        "statusCode": 200,
+        "success": true,
+        "totalCount": 12,
+        "returnedCount": 5,
+        "rateLimit": {
+          "limit": "24000",
+          "remaining": "23983",
+          "reset": "1769126400"
+        },
+        "sampleId": 1,
+        "fields": {
+          "id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "RAYNET s.r.o."
+          },
+          "titleBefore": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "firstName": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "lastName": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "titleAfter": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "person": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "false"
+          },
+          "role": {
+            "type": "string",
+            "nullable": false,
+            "sample": "C_SUPPLIER"
+          },
+          "state": {
+            "type": "string",
+            "nullable": false,
+            "sample": "A_POTENTIAL"
+          },
+          "rating": {
+            "type": "string",
+            "nullable": false,
+            "sample": "A"
+          },
+          "owner": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "owner.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "2"
+          },
+          "owner.fullName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Marek Romik"
+          },
+          "regNumber": {
+            "type": "string",
+            "nullable": false,
+            "sample": "26843820"
+          },
+          "taxNumber": {
+            "type": "string",
+            "nullable": false,
+            "sample": "CZ26843820"
+          },
+          "taxNumber2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "taxPayer": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "bankAccount": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "databox": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "court": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "primaryAddress.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "primaryAddress.primary": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "true"
+          },
+          "primaryAddress.contactAddress": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "true"
+          },
+          "primaryAddress.extIds": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.address": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "primaryAddress.address.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "primaryAddress.address.city": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Ostrava-Poruba"
+          },
+          "primaryAddress.address.country": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Czech Republic"
+          },
+          "primaryAddress.address.countryCode": {
+            "type": "string",
+            "nullable": false,
+            "sample": "CZ"
+          },
+          "primaryAddress.address.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Account Headquarters"
+          },
+          "primaryAddress.address.province": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.address.street": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Hlavní třída 6078/13"
+          },
+          "primaryAddress.address.zipCode": {
+            "type": "string",
+            "nullable": false,
+            "sample": "708 00"
+          },
+          "primaryAddress.address.lat": {
+            "type": "number",
+            "nullable": false,
+            "sample": "49.8259006"
+          },
+          "primaryAddress.address.lng": {
+            "type": "number",
+            "nullable": false,
+            "sample": "18.1824497"
+          },
+          "primaryAddress.contactInfo": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "primaryAddress.contactInfo.primary": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "true"
+          },
+          "primaryAddress.contactInfo.email": {
+            "type": "string",
+            "nullable": false,
+            "sample": "info@raynet.cz"
+          },
+          "primaryAddress.contactInfo.email2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.tel1": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.tel1Type": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.tel2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.tel2Type": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.fax": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.www": {
+            "type": "string",
+            "nullable": false,
+            "sample": "raynet.cz"
+          },
+          "primaryAddress.contactInfo.otherContact": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.doNotSendMM": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "false"
+          },
+          "primaryAddress.territory": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactAddress": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "contactAddress.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "contactAddress.primary": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "true"
+          },
+          "contactAddress.contactAddress": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "true"
+          },
+          "contactAddress.extIds": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactAddress.address": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "contactAddress.address.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "contactAddress.address.city": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Ostrava-Poruba"
+          },
+          "contactAddress.address.country": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Czech Republic"
+          },
+          "contactAddress.address.countryCode": {
+            "type": "string",
+            "nullable": false,
+            "sample": "CZ"
+          },
+          "contactAddress.address.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Account Headquarters"
+          },
+          "contactAddress.address.province": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactAddress.address.street": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Hlavní třída 6078/13"
+          },
+          "contactAddress.address.zipCode": {
+            "type": "string",
+            "nullable": false,
+            "sample": "708 00"
+          },
+          "contactAddress.address.lat": {
+            "type": "number",
+            "nullable": false,
+            "sample": "49.8259006"
+          },
+          "contactAddress.address.lng": {
+            "type": "number",
+            "nullable": false,
+            "sample": "18.1824497"
+          },
+          "contactAddress.contactInfo": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "contactAddress.contactInfo.primary": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "true"
+          },
+          "contactAddress.contactInfo.email": {
+            "type": "string",
+            "nullable": false,
+            "sample": "info@raynet.cz"
+          },
+          "contactAddress.contactInfo.email2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactAddress.contactInfo.tel1": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactAddress.contactInfo.tel1Type": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactAddress.contactInfo.tel2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactAddress.contactInfo.tel2Type": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactAddress.contactInfo.fax": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactAddress.contactInfo.www": {
+            "type": "string",
+            "nullable": false,
+            "sample": "raynet.cz"
+          },
+          "contactAddress.contactInfo.otherContact": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactAddress.contactInfo.doNotSendMM": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "false"
+          },
+          "contactAddress.territory": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "category": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "turnover": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "economyActivity": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "companyClassification1": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "companyClassification2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "companyClassification3": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "paymentTerm": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "paymentTerm.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "42"
+          },
+          "paymentTerm.value": {
+            "type": "string",
+            "nullable": false,
+            "sample": "7 dni"
+          },
+          "contactSource": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "birthday": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2004-10-07"
+          },
+          "notice": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "customFields": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "attachments": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "rowInfo.createdAt": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2025-12-16 14:10"
+          },
+          "rowInfo.createdBy": {
+            "type": "string",
+            "nullable": false,
+            "sample": "(unknown)"
+          },
+          "rowInfo.updatedAt": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "rowInfo.updatedBy": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "rowInfo.rowAccess": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "rowInfo.rowState": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "securityLevel": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "securityLevel.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "securityLevel.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Wspólny"
+          },
+          "inlineGdpr": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "_version": {
+            "type": "number",
+            "nullable": false,
+            "sample": "2"
+          }
+        }
+      },
+      "single": {
+        "statusCode": 200,
+        "success": "true",
+        "hasData": true,
+        "fields": {
+          "id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "RAYNET s.r.o."
+          },
+          "person": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "false"
+          },
+          "firstName": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "lastName": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "titleBefore": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "titleAfter": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "salutation": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "owner": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "owner.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "2"
+          },
+          "owner.fullName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Marek Romik"
+          },
+          "rating": {
+            "type": "string",
+            "nullable": false,
+            "sample": "A"
+          },
+          "state": {
+            "type": "string",
+            "nullable": false,
+            "sample": "A_POTENTIAL"
+          },
+          "role": {
+            "type": "string",
+            "nullable": false,
+            "sample": "C_SUPPLIER"
+          },
+          "notice": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "category": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactSource": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "employeesNumber": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "legalForm": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "paymentTerm": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "paymentTerm.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "42"
+          },
+          "paymentTerm.value": {
+            "type": "string",
+            "nullable": false,
+            "sample": "7 dni"
+          },
+          "turnover": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "economyActivity": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "companyClassification1": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "companyClassification2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "companyClassification3": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "regNumber": {
+            "type": "string",
+            "nullable": false,
+            "sample": "26843820"
+          },
+          "taxNumber": {
+            "type": "string",
+            "nullable": false,
+            "sample": "CZ26843820"
+          },
+          "taxNumber2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "taxPayer": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "bankAccount": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "birthday": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2004-10-07"
+          },
+          "databox": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "court": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "primaryAddress.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "primaryAddress.primary": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "true"
+          },
+          "primaryAddress.contactAddress": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "true"
+          },
+          "primaryAddress.extIds": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.address": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "primaryAddress.address.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "primaryAddress.address.city": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Ostrava-Poruba"
+          },
+          "primaryAddress.address.country": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Czech Republic"
+          },
+          "primaryAddress.address.countryCode": {
+            "type": "string",
+            "nullable": false,
+            "sample": "CZ"
+          },
+          "primaryAddress.address.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Account Headquarters"
+          },
+          "primaryAddress.address.province": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.address.street": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Hlavní třída 6078/13"
+          },
+          "primaryAddress.address.zipCode": {
+            "type": "string",
+            "nullable": false,
+            "sample": "708 00"
+          },
+          "primaryAddress.address.lat": {
+            "type": "number",
+            "nullable": false,
+            "sample": "49.8259006"
+          },
+          "primaryAddress.address.lng": {
+            "type": "number",
+            "nullable": false,
+            "sample": "18.1824497"
+          },
+          "primaryAddress.contactInfo": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "primaryAddress.contactInfo.primary": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "true"
+          },
+          "primaryAddress.contactInfo.email": {
+            "type": "string",
+            "nullable": false,
+            "sample": "info@raynet.cz"
+          },
+          "primaryAddress.contactInfo.email2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.tel1": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.tel1Type": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.tel2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.tel2Type": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.fax": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.www": {
+            "type": "string",
+            "nullable": false,
+            "sample": "raynet.cz"
+          },
+          "primaryAddress.contactInfo.otherContact": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryAddress.contactInfo.doNotSendMM": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "false"
+          },
+          "primaryAddress.territory": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "logo": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "logo.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "2"
+          },
+          "logo.contentType": {
+            "type": "string",
+            "nullable": false,
+            "sample": "image/png"
+          },
+          "logo.fileName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "raynet.png"
+          },
+          "logo.size": {
+            "type": "number",
+            "nullable": false,
+            "sample": "3933"
+          },
+          "socialNetworkContact": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "socialNetworkContact.facebook": {
+            "type": "string",
+            "nullable": false,
+            "sample": "https://www.facebook.com/raynetsw"
+          },
+          "socialNetworkContact.googleplus": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.twitter": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.linkedin": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.pinterest": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.instagram": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.skype": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.youtube": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "customFields": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "rowInfo.createdAt": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2025-12-16 14:10"
+          },
+          "rowInfo.createdBy": {
+            "type": "string",
+            "nullable": false,
+            "sample": "(unknown)"
+          },
+          "rowInfo.updatedAt": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "rowInfo.updatedBy": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "rowInfo.rowAccess": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "rowInfo.rowState": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "securityLevel": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "securityLevel.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "securityLevel.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Wspólny"
+          },
+          "inlineGdpr": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "originLead": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "_version": {
+            "type": "number",
+            "nullable": false,
+            "sample": "2"
+          },
+          "extIds": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "attachments": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "addresses": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:1]"
+          }
+        }
+      },
+      "filters": [
+        {
+          "field": "name[LIKE]",
+          "value": "%",
+          "statusCode": 200,
+          "resultCount": 3
+        }
+      ],
+      "errors": [],
+      "sorting": {
+        "statusCode": 400
+      },
+      "pagination": {
+        "statusCode": 200,
+        "success": true,
+        "returnedCount": 2
+      }
+    },
+    "person": {
+      "name": "Persons (Contacts)",
+      "endpoint": "/person/",
+      "timestamp": "2026-01-22T21:56:52.757Z",
+      "list": {
+        "statusCode": 200,
+        "success": true,
+        "totalCount": 29,
+        "returnedCount": 5,
+        "rateLimit": {
+          "limit": "24000",
+          "remaining": "23978",
+          "reset": "1769126400"
+        },
+        "sampleId": 2,
+        "fields": {
+          "id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "2"
+          },
+          "titleBefore": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Marek"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Romik"
+          },
+          "titleAfter": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryRelationship": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "primaryRelationship.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "2"
+          },
+          "primaryRelationship.type": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Administrator"
+          },
+          "primaryRelationship.company": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "primaryRelationship.company.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "2"
+          },
+          "primaryRelationship.company.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "321 GROW"
+          },
+          "owner": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "owner.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "owner.fullName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "RAYNET CRM"
+          },
+          "contactInfo": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "contactInfo.email": {
+            "type": "string",
+            "nullable": false,
+            "sample": "marek.romik@321grow.pl"
+          },
+          "contactInfo.email2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.tel1": {
+            "type": "string",
+            "nullable": false,
+            "sample": "+48502821199"
+          },
+          "contactInfo.tel1Type": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.tel2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.tel2Type": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.fax": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.www": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.otherContact": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.doNotSendMM": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "false"
+          },
+          "privateAddress": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "privateAddress.city": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "privateAddress.country": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "privateAddress.countryCode": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "privateAddress.province": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "privateAddress.street": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "privateAddress.zipCode": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "category": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "personClassification1": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "personClassification2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "personClassification3": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "salutation": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "birthday": {
+            "type": "string",
+            "nullable": false,
+            "sample": "1978-09-20"
+          },
+          "language": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "maritalStatus": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "gender": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "communicationTone": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "companyAddress": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "companyAddress.address": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "companyAddress.address.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "2"
+          },
+          "companyAddress.address.city": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "companyAddress.address.country": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Polsko"
+          },
+          "companyAddress.address.countryCode": {
+            "type": "string",
+            "nullable": false,
+            "sample": "PL"
+          },
+          "companyAddress.address.province": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "companyAddress.address.street": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "companyAddress.address.zipCode": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "companyAddress.territory": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "customFields": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "rowInfo.createdAt": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2025-12-16 14:10"
+          },
+          "rowInfo.createdBy": {
+            "type": "string",
+            "nullable": false,
+            "sample": "(unknown)"
+          },
+          "rowInfo.updatedAt": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-05 14:47"
+          },
+          "rowInfo.updatedBy": {
+            "type": "string",
+            "nullable": false,
+            "sample": "marek.romik@321grow.pl"
+          },
+          "rowInfo.rowAccess": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "rowInfo.rowState": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "securityLevel": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "securityLevel.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "securityLevel.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Wspólny"
+          },
+          "notice": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "activeUserAccount": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "true"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "keyman": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "false"
+          },
+          "inlineGdpr": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "_version": {
+            "type": "number",
+            "nullable": false,
+            "sample": "7"
+          }
+        }
+      },
+      "single": {
+        "statusCode": 200,
+        "success": "true",
+        "hasData": true,
+        "fields": {
+          "id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "2"
+          },
+          "titleBefore": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Marek"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Romik"
+          },
+          "titleAfter": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "owner": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "owner.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "owner.fullName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "RAYNET CRM"
+          },
+          "category": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "primaryRelationship": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "primaryRelationship.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "2"
+          },
+          "primaryRelationship.type": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Administrator"
+          },
+          "primaryRelationship.company": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "primaryRelationship.company.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "2"
+          },
+          "primaryRelationship.company.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "321 GROW"
+          },
+          "personClassification1": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "personClassification2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "personClassification3": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "salutation": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "birthday": {
+            "type": "string",
+            "nullable": false,
+            "sample": "1978-09-20"
+          },
+          "language": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "maritalStatus": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "gender": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "communicationTone": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "contactInfo.email": {
+            "type": "string",
+            "nullable": false,
+            "sample": "marek.romik@321grow.pl"
+          },
+          "contactInfo.email2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.tel1": {
+            "type": "string",
+            "nullable": false,
+            "sample": "+48502821199"
+          },
+          "contactInfo.tel1Type": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.tel2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.tel2Type": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.www": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.fax": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.facebook": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.otherContact": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "contactInfo.doNotSendMM": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "false"
+          },
+          "socialNetworkContact": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "socialNetworkContact.facebook": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.googleplus": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.twitter": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.linkedin": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.pinterest": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.instagram": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.skype": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "socialNetworkContact.youtube": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "privateAddress": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "privateAddress.city": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "privateAddress.country": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "privateAddress.countryCode": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "privateAddress.province": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "privateAddress.street": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "privateAddress.zipCode": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "customFields": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "rowInfo.createdAt": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2025-12-16 14:10"
+          },
+          "rowInfo.createdBy": {
+            "type": "string",
+            "nullable": false,
+            "sample": "(unknown)"
+          },
+          "rowInfo.updatedAt": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-05 14:47"
+          },
+          "rowInfo.updatedBy": {
+            "type": "string",
+            "nullable": false,
+            "sample": "marek.romik@321grow.pl"
+          },
+          "rowInfo.rowAccess": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "rowInfo.rowState": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "securityLevel": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "securityLevel.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "securityLevel.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Wspólny"
+          },
+          "notice": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "photo": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "photo.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "5"
+          },
+          "photo.contentType": {
+            "type": "string",
+            "nullable": false,
+            "sample": "image/png"
+          },
+          "photo.fileName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Marek_R_1200x1200.png"
+          },
+          "photo.size": {
+            "type": "number",
+            "nullable": false,
+            "sample": "295195"
+          },
+          "activeUserAccount": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "true"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "keyman": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "false"
+          },
+          "inlineGdpr": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "originLead": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "extIds": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "_version": {
+            "type": "number",
+            "nullable": false,
+            "sample": "7"
+          },
+          "attachments": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "relationships": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:1]"
+          }
+        }
+      },
+      "filters": [
+        {
+          "field": "lastName[LIKE]",
+          "value": "%",
+          "statusCode": 200,
+          "resultCount": 3
+        }
+      ],
+      "errors": [],
+      "sorting": {
+        "statusCode": 400
+      },
+      "pagination": {
+        "statusCode": 200,
+        "success": true,
+        "returnedCount": 2
+      }
+    },
+    "businessCase": {
+      "name": "Business Cases (Deals)",
+      "endpoint": "/businessCase/",
+      "timestamp": "2026-01-22T21:56:53.121Z",
+      "list": {
+        "statusCode": 200,
+        "success": true,
+        "totalCount": 3,
+        "returnedCount": 3,
+        "rateLimit": {
+          "limit": "24000",
+          "remaining": "23973",
+          "reset": "1769126400"
+        },
+        "sampleId": 4,
+        "fields": {
+          "id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "4"
+          },
+          "code": {
+            "type": "string",
+            "nullable": false,
+            "sample": "SP-26-001"
+          },
+          "name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Wdrożenie Raynet CRM"
+          },
+          "phaseChanges": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:1]"
+          },
+          "company": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "company.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "4"
+          },
+          "company.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Evigo.com Spółka z o.o. sp.k."
+          },
+          "person": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "owner": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "owner.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "4"
+          },
+          "owner.fullName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Maciej Konieczny"
+          },
+          "currency": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "currency.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "40"
+          },
+          "currency.value": {
+            "type": "string",
+            "nullable": false,
+            "sample": "zł"
+          },
+          "validFrom": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-07"
+          },
+          "validTill": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "scheduledEnd": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "totalAmount": {
+            "type": "number",
+            "nullable": false,
+            "sample": "5000"
+          },
+          "tradingProfit": {
+            "type": "number",
+            "nullable": false,
+            "sample": "5000"
+          },
+          "estimatedValue": {
+            "type": "number",
+            "nullable": false,
+            "sample": "0"
+          },
+          "status": {
+            "type": "string",
+            "nullable": false,
+            "sample": "B_ACTIVE"
+          },
+          "probability": {
+            "type": "number",
+            "nullable": false,
+            "sample": "50"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "businessCasePhase": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "businessCasePhase.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "businessCasePhase.value": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Zaczynamy"
+          },
+          "businessCaseType": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "businessCaseType.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "50"
+          },
+          "businessCaseType.value": {
+            "type": "string",
+            "nullable": false,
+            "sample": "default"
+          },
+          "category": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "project": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "source": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "businessCaseClassification1": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "businessCaseClassification2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "businessCaseClassification3": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "losingReason": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "losingCategory": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "customFields": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "rowInfo.createdAt": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-07 16:39"
+          },
+          "rowInfo.createdBy": {
+            "type": "string",
+            "nullable": false,
+            "sample": "maciej.konieczny@321grow.pl"
+          },
+          "rowInfo.updatedAt": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-07 16:39"
+          },
+          "rowInfo.updatedBy": {
+            "type": "string",
+            "nullable": false,
+            "sample": "maciej.konieczny@321grow.pl"
+          },
+          "rowInfo.rowAccess": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "rowInfo.rowState": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "securityLevel": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "securityLevel.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "securityLevel.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Wspólny"
+          },
+          "description": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "_version": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          }
+        }
+      },
+      "single": {
+        "statusCode": 200,
+        "success": "true",
+        "hasData": true,
+        "fields": {
+          "id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "4"
+          },
+          "code": {
+            "type": "string",
+            "nullable": false,
+            "sample": "SP-26-001"
+          },
+          "name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Wdrożenie Raynet CRM"
+          },
+          "phaseChanges": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:1]"
+          },
+          "company": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "company.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "4"
+          },
+          "company.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Evigo.com Spółka z o.o. sp.k."
+          },
+          "person": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "originalLead": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "owner": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "owner.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "4"
+          },
+          "owner.fullName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Maciej Konieczny"
+          },
+          "currency": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "currency.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "40"
+          },
+          "currency.value": {
+            "type": "string",
+            "nullable": false,
+            "sample": "zł"
+          },
+          "validFrom": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-07"
+          },
+          "validTill": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "scheduledEnd": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "totalAmount": {
+            "type": "number",
+            "nullable": false,
+            "sample": "5000"
+          },
+          "totalAmountWithTax": {
+            "type": "number",
+            "nullable": false,
+            "sample": "5000"
+          },
+          "tradingProfit": {
+            "type": "number",
+            "nullable": false,
+            "sample": "5000"
+          },
+          "estimatedValue": {
+            "type": "number",
+            "nullable": false,
+            "sample": "0"
+          },
+          "status": {
+            "type": "string",
+            "nullable": false,
+            "sample": "B_ACTIVE"
+          },
+          "probability": {
+            "type": "number",
+            "nullable": false,
+            "sample": "50"
+          },
+          "exchangeRate": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "businessCasePhase": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "businessCasePhase.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "businessCasePhase.value": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Zaczynamy"
+          },
+          "businessCaseType": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "businessCaseType.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "50"
+          },
+          "businessCaseType.value": {
+            "type": "string",
+            "nullable": false,
+            "sample": "default"
+          },
+          "category": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "project": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "source": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "businessCaseClassification1": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "businessCaseClassification2": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "businessCaseClassification3": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "losingReason": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "losingCategory": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "customFields": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "rowInfo.createdAt": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-07 16:39"
+          },
+          "rowInfo.createdBy": {
+            "type": "string",
+            "nullable": false,
+            "sample": "maciej.konieczny@321grow.pl"
+          },
+          "rowInfo.updatedAt": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-07 16:39"
+          },
+          "rowInfo.updatedBy": {
+            "type": "string",
+            "nullable": false,
+            "sample": "maciej.konieczny@321grow.pl"
+          },
+          "rowInfo.rowAccess": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "rowInfo.rowState": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "securityLevel": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "securityLevel.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "securityLevel.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Wspólny"
+          },
+          "description": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "attachments": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "items": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "signatures": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "extIds": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "_version": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          }
+        }
+      },
+      "filters": [
+        {
+          "field": "name[LIKE]",
+          "value": "%",
+          "statusCode": 200,
+          "resultCount": 3
+        }
+      ],
+      "errors": [],
+      "sorting": {
+        "statusCode": 400
+      },
+      "pagination": {
+        "statusCode": 200,
+        "success": true,
+        "returnedCount": 1
+      }
+    },
+    "activity": {
+      "name": "Activities",
+      "endpoint": "/activity/",
+      "timestamp": "2026-01-22T21:56:53.489Z",
+      "list": {
+        "statusCode": 200,
+        "success": true,
+        "totalCount": 18,
+        "returnedCount": 5,
+        "rateLimit": {
+          "limit": "24000",
+          "remaining": "23968",
+          "reset": "1769126400"
+        },
+        "sampleId": 1,
+        "fields": {
+          "_entityName": {
+            "type": "string",
+            "nullable": false,
+            "sample": "PhoneCall"
+          },
+          "id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "title": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Pierwszy kontakt"
+          },
+          "personal": {
+            "type": "boolean",
+            "nullable": false,
+            "sample": "false"
+          },
+          "status": {
+            "type": "string",
+            "nullable": false,
+            "sample": "COMPLETED"
+          },
+          "priority": {
+            "type": "string",
+            "nullable": false,
+            "sample": "DEFAULT"
+          },
+          "category": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "activity": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "company": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "company.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "4"
+          },
+          "company.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Evigo.com Spółka z o.o. sp.k."
+          },
+          "person": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "lead": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "project": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "businessCase": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "offer": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "salesOrder": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "scheduledFrom": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-07 14:00"
+          },
+          "scheduledTill": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-07 14:15"
+          },
+          "completed": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-07 14:15"
+          },
+          "description": {
+            "type": "string",
+            "nullable": false,
+            "sample": "<p>Przejście z LiveSpace na RayNet po kilku latach"
+          },
+          "solution": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "tags": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:0]"
+          },
+          "rowInfo.createdAt": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-07 16:41"
+          },
+          "rowInfo.createdBy": {
+            "type": "string",
+            "nullable": false,
+            "sample": "maciej.konieczny@321grow.pl"
+          },
+          "rowInfo.updatedAt": {
+            "type": "string",
+            "nullable": false,
+            "sample": "2026-01-07 16:55"
+          },
+          "rowInfo.updatedBy": {
+            "type": "string",
+            "nullable": false,
+            "sample": "maciej.konieczny@321grow.pl"
+          },
+          "rowInfo.rowAccess": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "rowInfo.rowState": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          },
+          "securityLevel": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "securityLevel.id": {
+            "type": "number",
+            "nullable": false,
+            "sample": "1"
+          },
+          "securityLevel.name": {
+            "type": "string",
+            "nullable": false,
+            "sample": "Wspólny"
+          },
+          "_version": {
+            "type": "number",
+            "nullable": false,
+            "sample": "4"
+          },
+          "customFields": {
+            "type": "object",
+            "nullable": false,
+            "sample": "[object]"
+          },
+          "participants": {
+            "type": "array",
+            "nullable": false,
+            "sample": "[array:2]"
+          },
+          "recurrence": {
+            "type": "object",
+            "nullable": true,
+            "sample": "null"
+          }
+        }
+      },
+      "single": {
+        "statusCode": 404,
+        "hasData": false
+      },
+      "filters": [],
+      "errors": [],
+      "sorting": {
+        "statusCode": 400
+      },
+      "pagination": {
+        "statusCode": 200,
+        "success": true,
+        "returnedCount": 2
+      }
+    },
+    "companyCategory": {
+      "statusCode": 200,
+      "count": 3,
+      "items": [
+        {
+          "id": 96,
+          "code01": "KAM",
+          "code02": "60AE00"
+        },
+        {
+          "id": 97,
+          "code01": "AM",
+          "code02": "CABC00"
+        },
+        {
+          "id": 98,
+          "code01": "zwykły",
+          "code02": "519CFF"
+        }
+      ]
+    },
+    "businessCaseCategory": {
+      "statusCode": 200,
+      "count": 4,
+      "items": [
+        {
+          "id": 99,
+          "code01": "[zielony]",
+          "code02": "8EA500"
+        },
+        {
+          "id": 100,
+          "code01": "[żółty]",
+          "code02": "CABC00"
+        },
+        {
+          "id": 101,
+          "code01": "[pomarańczowy]",
+          "code02": "E2B23A"
+        },
+        {
+          "id": 102,
+          "code01": "[czerwony]",
+          "code02": "E9802F"
+        }
+      ]
+    },
+    "companyTurnover": {
+      "statusCode": 200,
+      "count": 7,
+      "items": [
+        {
+          "id": 87,
+          "code01": "do 200 tys. zł"
+        },
+        {
+          "id": 88,
+          "code01": "200 tys. - 2 mln zł"
+        },
+        {
+          "id": 89,
+          "code01": "2 - 5 mln zł"
+        },
+        {
+          "id": 90,
+          "code01": "5 - 17 mln zł"
+        },
+        {
+          "id": 91,
+          "code01": "17 - 85 mln zł"
+        },
+        {
+          "id": 92,
+          "code01": "85 - 250 mln zł"
+        },
+        {
+          "id": 93,
+          "code01": "nad 250 mln zł"
+        }
+      ]
+    },
+    "businessCasePhase": {
+      "statusCode": 200,
+      "count": 7,
+      "items": [
+        {
+          "id": 1,
+          "code01": "Zaczynamy"
+        },
+        {
+          "id": 2,
+          "code01": "Odbyło się spotkanie"
+        },
+        {
+          "id": 3,
+          "code01": "Oferta poszła"
+        },
+        {
+          "id": 4,
+          "code01": "Przed zamknięciem"
+        },
+        {
+          "id": 5,
+          "code01": "Wygrana"
+        },
+        {
+          "id": 6,
+          "code01": "Przegrana"
+        },
+        {
+          "id": 7,
+          "code01": "Anulowane"
+        }
+      ]
+    }
+  }
+}
