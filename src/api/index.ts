@@ -29,3 +29,11 @@ export {
   type DealResult,
   type DealListResult,
 } from './deals';
+
+export {
+  ActivitiesService,
+  getActivitiesService,
+  resetActivitiesService,
+  type ActivityResult,
+  type ActivityListResult,
+} from './activities';

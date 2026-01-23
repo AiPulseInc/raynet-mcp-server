@@ -612,6 +612,28 @@ export interface CompleteActivityInput {
   solution?: string;
 }
 
+export interface GetActivityInput {
+  activityId: number;
+  activityType: ActivityType;
+}
+
+export interface UpdateActivityInput {
+  activityId: number;
+  activityType: ActivityType;
+  title?: string;
+  scheduledFrom?: string;
+  scheduledTill?: string;
+  description?: string;
+  priority?: ActivityPriority;
+  status?: ActivityStatus;
+}
+
+export interface SearchActivitiesInput {
+  query: string;
+  limit?: number;
+  offset?: number;
+}
+
 // ============================================================================
 // Query Parameter Types
 // ============================================================================

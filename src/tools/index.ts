@@ -41,11 +41,27 @@ export {
   handleGetPipelineValue,
 } from './deals';
 
+// Activity tools
+export {
+  activityToolDefinitions,
+  handleActivityTool,
+  handleListActivities,
+  handleSearchActivities,
+  handleGetActivity,
+  handleCreateActivity,
+  handleUpdateActivity,
+  handleCompleteActivity,
+  handleDeleteActivity,
+  handleGetTodayActivities,
+  handleGetOverdueActivities,
+} from './activities';
+
 // All tool definitions
 export const allToolDefinitions = [
   ...require('./companies').companyToolDefinitions,
   ...require('./contacts').contactToolDefinitions,
   ...require('./deals').dealToolDefinitions,
+  ...require('./activities').activityToolDefinitions,
 ];
 
 // Tool handler router
@@ -75,6 +91,12 @@ export async function handleTool(
   if (toolName.startsWith('raynet_') && (toolName.includes('deal') || toolName.includes('pipeline'))) {
     const { handleDealTool } = require('./deals');
     return handleDealTool(toolName, args);
+  }
+
+  // Activity tools
+  if (toolName.startsWith('raynet_') && (toolName.includes('activit') || toolName.includes('today') || toolName.includes('overdue'))) {
+    const { handleActivityTool } = require('./activities');
+    return handleActivityTool(toolName, args);
   }
 
   // Unknown tool
