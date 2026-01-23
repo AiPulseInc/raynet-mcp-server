@@ -27,10 +27,25 @@ export {
   handleLinkContactToCompany,
 } from './contacts';
 
+// Deal tools
+export {
+  dealToolDefinitions,
+  handleDealTool,
+  handleListDeals,
+  handleSearchDeals,
+  handleGetDeal,
+  handleCreateDeal,
+  handleUpdateDeal,
+  handleUpdateDealPhase,
+  handleDeleteDeal,
+  handleGetPipelineValue,
+} from './deals';
+
 // All tool definitions
 export const allToolDefinitions = [
   ...require('./companies').companyToolDefinitions,
   ...require('./contacts').contactToolDefinitions,
+  ...require('./deals').dealToolDefinitions,
 ];
 
 // Tool handler router
@@ -54,6 +69,12 @@ export async function handleTool(
   if (toolName === 'raynet_link_contact_to_company') {
     const { handleLinkContactToCompany } = require('./contacts');
     return handleLinkContactToCompany(args);
+  }
+
+  // Deal tools
+  if (toolName.startsWith('raynet_') && (toolName.includes('deal') || toolName.includes('pipeline'))) {
+    const { handleDealTool } = require('./deals');
+    return handleDealTool(toolName, args);
   }
 
   // Unknown tool

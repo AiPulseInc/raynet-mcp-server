@@ -21,3 +21,11 @@ export {
   type ContactResult,
   type ContactListResult,
 } from './contacts';
+
+export {
+  DealsService,
+  getDealsService,
+  resetDealsService,
+  type DealResult,
+  type DealListResult,
+} from './deals';
