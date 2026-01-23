@@ -37,3 +37,12 @@ export {
   type ActivityResult,
   type ActivityListResult,
 } from './activities';
+
+export {
+  LeadsService,
+  getLeadsService,
+  resetLeadsService,
+  type LeadResult,
+  type LeadListResult,
+  type LeadConversionResult,
+} from './leads';

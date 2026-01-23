@@ -56,12 +56,28 @@ export {
   handleGetOverdueActivities,
 } from './activities';
 
+// Lead tools
+export {
+  leadToolDefinitions,
+  handleLeadTool,
+  handleListLeads,
+  handleSearchLeads,
+  handleGetLead,
+  handleCreateLead,
+  handleUpdateLead,
+  handleUpdateLeadPhase,
+  handleDeleteLead,
+  handleConvertLead,
+  handleGetLeadStats,
+} from './leads';
+
 // All tool definitions
 export const allToolDefinitions = [
   ...require('./companies').companyToolDefinitions,
   ...require('./contacts').contactToolDefinitions,
   ...require('./deals').dealToolDefinitions,
   ...require('./activities').activityToolDefinitions,
+  ...require('./leads').leadToolDefinitions,
 ];
 
 // Tool handler router
@@ -97,6 +113,12 @@ export async function handleTool(
   if (toolName.startsWith('raynet_') && (toolName.includes('activit') || toolName.includes('today') || toolName.includes('overdue'))) {
     const { handleActivityTool } = require('./activities');
     return handleActivityTool(toolName, args);
+  }
+
+  // Lead tools
+  if (toolName.startsWith('raynet_') && (toolName.includes('lead') || toolName.includes('convert'))) {
+    const { handleLeadTool } = require('./leads');
+    return handleLeadTool(toolName, args);
   }
 
   // Unknown tool

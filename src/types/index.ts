@@ -394,6 +394,60 @@ export interface RaynetActivity {
 }
 
 // ============================================================================
+// Lead Types
+// ============================================================================
+
+/** Lead status */
+export type LeadStatus = 'A_DRAFT' | 'B_ACTIVE' | 'C_CONVERTED' | 'D_CANCELLED';
+
+/** Lead priority */
+export type LeadPriority = 'LOW' | 'DEFAULT' | 'HIGH';
+
+export interface RaynetLeadPhase {
+  id: number;
+  code01: string;
+  color?: string;
+  sequenceNumber: number;
+  locked: boolean;
+}
+
+export interface RaynetLead {
+  id: number;
+  code: string;
+  topic: string;
+  leadDate: string;
+  status: LeadStatus;
+  priority: LeadPriority;
+  leadPhase: RaynetLeadPhase;
+  owner: RaynetOwnerReference;
+  firstName?: string | null;
+  lastName?: string | null;
+  companyName?: string | null;
+  titleBefore?: string | null;
+  titleAfter?: string | null;
+  leadPerson: boolean;
+  company?: RaynetReference | null;
+  person?: RaynetReference | null;
+  businessCase?: RaynetReference | null;
+  convertDate?: string | null;
+  contactSource?: RaynetReference | null;
+  category?: RaynetReference | null;
+  territory?: RaynetReference | null;
+  contactInfo: RaynetContactInfo;
+  address?: RaynetAddressDetails | null;
+  socialNetworkContact?: Record<string, string | null>;
+  regNumber?: string | null;
+  taxNumber?: string | null;
+  notice?: string | null;
+  tags: string[];
+  customFields: Record<string, unknown>;
+  rowInfo: RaynetRowInfo;
+  securityLevel: RaynetSecurityLevel;
+  attachments?: RaynetFileInfo[];
+  _version: number;
+}
+
+// ============================================================================
 // Enum/Category Types
 // ============================================================================
 
@@ -632,6 +686,68 @@ export interface SearchActivitiesInput {
   query: string;
   limit?: number;
   offset?: number;
+}
+
+// ============================================================================
+// MCP Tool Input Types - Leads
+// ============================================================================
+
+export interface ListLeadsInput {
+  limit?: number;
+  offset?: number;
+  status?: LeadStatus;
+  phaseId?: number;
+  ownerId?: number;
+}
+
+export interface SearchLeadsInput {
+  query: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface GetLeadInput {
+  leadId: number;
+}
+
+export interface CreateLeadInput {
+  topic: string;
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  ownerId?: number;
+  phaseId?: number;
+  priority?: LeadPriority;
+  contactSourceId?: number;
+  notice?: string;
+  tags?: string[];
+}
+
+export interface UpdateLeadInput {
+  leadId: number;
+  topic?: string;
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+  phaseId?: number;
+  priority?: LeadPriority;
+  status?: LeadStatus;
+  notice?: string;
+  tags?: string[];
+}
+
+export interface ConvertLeadInput {
+  leadId: number;
+  createCompany?: boolean;
+  createContact?: boolean;
+  createDeal?: boolean;
+  dealName?: string;
 }
 
 // ============================================================================
