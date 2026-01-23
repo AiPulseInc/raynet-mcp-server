@@ -35,6 +35,7 @@ export const CreateContactSchema = z.object({
   firstName: z.string().min(1, 'Imię jest wymagane'),
   lastName: z.string().min(1, 'Nazwisko jest wymagane'),
   companyId: z.number().int().positive().optional(),
+  position: z.string().optional(),
   ownerId: z.number().int().positive().optional(),
   email: z.string().email('Nieprawidłowy format email').optional(),
   phone: z.string().optional(),
@@ -159,6 +160,10 @@ export const contactToolDefinitions = [
         companyId: {
           type: 'number',
           description: 'ID firmy, do której przypisać kontakt',
+        },
+        position: {
+          type: 'string',
+          description: 'Stanowisko/rola w firmie (np. Dyrektor, Menedżer HR, Asystent)',
         },
         ownerId: {
           type: 'number',

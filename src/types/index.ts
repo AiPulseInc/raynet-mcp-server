@@ -552,6 +552,7 @@ export interface CreateContactInput {
   firstName: string;
   lastName: string;
   companyId?: number;
+  position?: string;
   ownerId?: number;
   email?: string;
   phone?: string;

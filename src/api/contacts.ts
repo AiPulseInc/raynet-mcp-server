@@ -211,12 +211,15 @@ export class ContactsService {
       if (input.phone) payload.contactInfo.tel1 = input.phone;
     }
 
-    // Company relationship
+    // Company relationship with optional position/role
     if (input.companyId) {
       payload.relationship = {
         company: input.companyId,
         primary: true,
       };
+      if (input.position) {
+        payload.relationship.type = input.position;
+      }
     }
 
     logger.info('Creating contact', {
