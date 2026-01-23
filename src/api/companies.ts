@@ -226,7 +226,8 @@ export class CompaniesService {
 
     logger.info('Creating company', { name: input.name });
 
-    const response = await this.client.post<RaynetCompany>(
+    // Raynet API uses PUT for creating new records
+    const response = await this.client.put<RaynetCompany>(
       `${this.endpoint}/`,
       payload
     );

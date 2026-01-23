@@ -225,7 +225,8 @@ export class ContactsService {
       companyId: input.companyId
     });
 
-    const response = await this.client.post<RaynetPerson>(
+    // Raynet API uses PUT for creating new records
+    const response = await this.client.put<RaynetPerson>(
       `${this.endpoint}/`,
       payload
     );

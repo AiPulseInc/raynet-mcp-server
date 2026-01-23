@@ -225,7 +225,8 @@ export class LeadsService {
 
     logger.info('Creating lead', { topic: input.topic });
 
-    const response = await this.client.post<RaynetLead>(
+    // Raynet API uses PUT for creating new records
+    const response = await this.client.put<RaynetLead>(
       `${this.endpoint}/`,
       payload
     );

@@ -331,7 +331,8 @@ export class ActivitiesService {
 
     logger.info('Creating activity', { type, title, companyId, dealId });
 
-    const response = await this.client.post<RaynetActivity>(
+    // Raynet API uses PUT for creating new records
+    const response = await this.client.put<RaynetActivity>(
       `${this.getEndpoint(type)}/`,
       payload
     );

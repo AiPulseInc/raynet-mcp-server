@@ -226,7 +226,8 @@ export class DealsService {
 
     logger.info('Creating deal', { name: input.name, companyId: input.companyId });
 
-    const response = await this.client.post<RaynetBusinessCase>(
+    // Raynet API uses PUT for creating new records
+    const response = await this.client.put<RaynetBusinessCase>(
       `${this.endpoint}/`,
       payload
     );
