@@ -1,0 +1,642 @@
+/**
+ * MCP Tools for Companies (Firmy)
+ *
+ * Tools for managing Raynet CRM companies via MCP protocol
+ */
+
+import { z } from 'zod';
+import { getCompaniesService } from '../api/companies';
+import { logger } from '../utils/logger';
+import { getPolishErrorMessage } from '../utils/errors';
+import type { RaynetCompany } from '../types';
+
+// ============================================================================
+// Utility Functions
+// ============================================================================
+
+/**
+ * Remove undefined values from an object (for exactOptionalPropertyTypes compatibility)
+ */
+function removeUndefined<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== undefined)
+  ) as T;
+}
+
+// ============================================================================
+// Zod Schemas for Input Validation
+// ============================================================================
+
+const CompanyStateSchema = z.enum(['A_POTENTIAL', 'B_ACTUAL', 'C_DEFERRED', 'D_ENDED']);
+const CompanyRoleSchema = z.enum(['A_SUBSCRIBER', 'B_PARTNER', 'C_SUPPLIER', 'D_RIVAL']);
+const RatingSchema = z.enum(['A', 'B', 'C']);
+
+export const ListCompaniesSchema = z.object({
+  limit: z.number().int().min(1).max(100).optional().default(20),
+  offset: z.number().int().min(0).optional().default(0),
+  state: CompanyStateSchema.optional(),
+  role: CompanyRoleSchema.optional(),
+  rating: RatingSchema.optional(),
+  ownerId: z.number().int().positive().optional(),
+  categoryId: z.number().int().positive().optional(),
+});
+
+export const SearchCompaniesSchema = z.object({
+  query: z.string().min(1, 'Zapytanie wyszukiwania jest wymagane'),
+  limit: z.number().int().min(1).max(100).optional().default(20),
+  offset: z.number().int().min(0).optional().default(0),
+});
+
+export const GetCompanySchema = z.object({
+  companyId: z.number().int().positive('ID firmy musi być liczbą dodatnią'),
+});
+
+export const CreateCompanySchema = z.object({
+  name: z.string().min(1, 'Nazwa firmy jest wymagana'),
+  role: CompanyRoleSchema.optional(),
+  state: CompanyStateSchema.optional(),
+  rating: RatingSchema.optional(),
+  ownerId: z.number().int().positive().optional(),
+  categoryId: z.number().int().positive().optional(),
+  regNumber: z.string().optional(),
+  taxNumber: z.string().optional(),
+  notice: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  address: z
+    .object({
+      street: z.string().optional(),
+      city: z.string().optional(),
+      zipCode: z.string().optional(),
+      country: z.string().optional(),
+    })
+    .optional(),
+  contactInfo: z
+    .object({
+      email: z.string().email('Nieprawidłowy format email').optional(),
+      tel1: z.string().optional(),
+      www: z.string().optional(),
+    })
+    .optional(),
+});
+
+export const UpdateCompanySchema = z.object({
+  companyId: z.number().int().positive('ID firmy musi być liczbą dodatnią'),
+  name: z.string().min(1).optional(),
+  role: CompanyRoleSchema.optional(),
+  state: CompanyStateSchema.optional(),
+  rating: RatingSchema.optional(),
+  ownerId: z.number().int().positive().optional(),
+  categoryId: z.number().int().positive().optional(),
+  notice: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+export const DeleteCompanySchema = z.object({
+  companyId: z.number().int().positive('ID firmy musi być liczbą dodatnią'),
+});
+
+// ============================================================================
+// Tool Definitions
+// ============================================================================
+
+export const companyToolDefinitions = [
+  {
+    name: 'raynet_list_companies',
+    description:
+      'Pobiera listę firm z Raynet CRM. Można filtrować po stanie, roli, ratingu, właścicielu i kategorii. Zwraca firmy z paginacją.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Maksymalna liczba wyników (1-100, domyślnie 20)',
+          default: 20,
+        },
+        offset: {
+          type: 'number',
+          description: 'Pomiń pierwsze N wyników (do paginacji)',
+          default: 0,
+        },
+        state: {
+          type: 'string',
+          enum: ['A_POTENTIAL', 'B_ACTUAL', 'C_DEFERRED', 'D_ENDED'],
+          description:
+            'Filtruj po stanie: A_POTENTIAL (potencjalny), B_ACTUAL (aktualny), C_DEFERRED (odroczony), D_ENDED (zakończony)',
+        },
+        role: {
+          type: 'string',
+          enum: ['A_SUBSCRIBER', 'B_PARTNER', 'C_SUPPLIER', 'D_RIVAL'],
+          description:
+            'Filtruj po roli: A_SUBSCRIBER (klient), B_PARTNER (partner), C_SUPPLIER (dostawca), D_RIVAL (konkurent)',
+        },
+        rating: {
+          type: 'string',
+          enum: ['A', 'B', 'C'],
+          description: 'Filtruj po ratingu: A (wysoki), B (średni), C (niski)',
+        },
+        ownerId: {
+          type: 'number',
+          description: 'Filtruj po ID właściciela',
+        },
+        categoryId: {
+          type: 'number',
+          description: 'Filtruj po ID kategorii',
+        },
+      },
+    },
+  },
+  {
+    name: 'raynet_search_companies',
+    description:
+      'Wyszukuje firmy po nazwie w Raynet CRM. Użyj tego narzędzia, gdy użytkownik szuka firmy po nazwie lub jej fragmencie.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Tekst do wyszukania w nazwie firmy',
+        },
+        limit: {
+          type: 'number',
+          description: 'Maksymalna liczba wyników (1-100, domyślnie 20)',
+          default: 20,
+        },
+        offset: {
+          type: 'number',
+          description: 'Pomiń pierwsze N wyników',
+          default: 0,
+        },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'raynet_get_company',
+    description:
+      'Pobiera szczegółowe informacje o firmie na podstawie jej ID. Zwraca pełne dane firmy włącznie z adresami i danymi kontaktowymi.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        companyId: {
+          type: 'number',
+          description: 'ID firmy w Raynet CRM',
+        },
+      },
+      required: ['companyId'],
+    },
+  },
+  {
+    name: 'raynet_create_company',
+    description:
+      'Tworzy nową firmę w Raynet CRM. Wymagana jest nazwa firmy, pozostałe pola są opcjonalne.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        name: {
+          type: 'string',
+          description: 'Nazwa firmy (wymagana)',
+        },
+        role: {
+          type: 'string',
+          enum: ['A_SUBSCRIBER', 'B_PARTNER', 'C_SUPPLIER', 'D_RIVAL'],
+          description: 'Rola firmy',
+        },
+        state: {
+          type: 'string',
+          enum: ['A_POTENTIAL', 'B_ACTUAL', 'C_DEFERRED', 'D_ENDED'],
+          description: 'Stan firmy',
+        },
+        rating: {
+          type: 'string',
+          enum: ['A', 'B', 'C'],
+          description: 'Rating firmy',
+        },
+        ownerId: {
+          type: 'number',
+          description: 'ID właściciela firmy',
+        },
+        categoryId: {
+          type: 'number',
+          description: 'ID kategorii firmy',
+        },
+        regNumber: {
+          type: 'string',
+          description: 'Numer rejestracyjny (NIP/REGON)',
+        },
+        taxNumber: {
+          type: 'string',
+          description: 'Numer VAT',
+        },
+        notice: {
+          type: 'string',
+          description: 'Notatka o firmie',
+        },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Lista tagów',
+        },
+        address: {
+          type: 'object',
+          description: 'Adres firmy',
+          properties: {
+            street: { type: 'string', description: 'Ulica' },
+            city: { type: 'string', description: 'Miasto' },
+            zipCode: { type: 'string', description: 'Kod pocztowy' },
+            country: { type: 'string', description: 'Kraj (domyślnie Polska)' },
+          },
+        },
+        contactInfo: {
+          type: 'object',
+          description: 'Dane kontaktowe',
+          properties: {
+            email: { type: 'string', description: 'Email' },
+            tel1: { type: 'string', description: 'Telefon' },
+            www: { type: 'string', description: 'Strona WWW' },
+          },
+        },
+      },
+      required: ['name'],
+    },
+  },
+  {
+    name: 'raynet_update_company',
+    description:
+      'Aktualizuje dane istniejącej firmy w Raynet CRM. Podaj tylko pola, które chcesz zmienić.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        companyId: {
+          type: 'number',
+          description: 'ID firmy do aktualizacji (wymagane)',
+        },
+        name: {
+          type: 'string',
+          description: 'Nowa nazwa firmy',
+        },
+        role: {
+          type: 'string',
+          enum: ['A_SUBSCRIBER', 'B_PARTNER', 'C_SUPPLIER', 'D_RIVAL'],
+          description: 'Nowa rola firmy',
+        },
+        state: {
+          type: 'string',
+          enum: ['A_POTENTIAL', 'B_ACTUAL', 'C_DEFERRED', 'D_ENDED'],
+          description: 'Nowy stan firmy',
+        },
+        rating: {
+          type: 'string',
+          enum: ['A', 'B', 'C'],
+          description: 'Nowy rating firmy',
+        },
+        ownerId: {
+          type: 'number',
+          description: 'ID nowego właściciela',
+        },
+        categoryId: {
+          type: 'number',
+          description: 'ID nowej kategorii',
+        },
+        notice: {
+          type: 'string',
+          description: 'Nowa notatka',
+        },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Nowe tagi (zastąpią istniejące)',
+        },
+      },
+      required: ['companyId'],
+    },
+  },
+  {
+    name: 'raynet_delete_company',
+    description:
+      'Usuwa firmę z Raynet CRM. UWAGA: Ta operacja jest nieodwracalna!',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        companyId: {
+          type: 'number',
+          description: 'ID firmy do usunięcia',
+        },
+      },
+      required: ['companyId'],
+    },
+  },
+];
+
+// ============================================================================
+// Tool Handlers
+// ============================================================================
+
+/**
+ * Format company for output
+ */
+function formatCompany(company: RaynetCompany): string {
+  const lines = [
+    `**${company.name}** (ID: ${company.id})`,
+    `- Stan: ${formatState(company.state)} | Rola: ${formatRole(company.role)} | Rating: ${company.rating}`,
+    `- Właściciel: ${company.owner.fullName}`,
+  ];
+
+  if (company.regNumber) {
+    lines.push(`- NIP/REGON: ${company.regNumber}`);
+  }
+
+  if (company.primaryAddress?.contactInfo?.email) {
+    lines.push(`- Email: ${company.primaryAddress.contactInfo.email}`);
+  }
+
+  if (company.primaryAddress?.contactInfo?.tel1) {
+    lines.push(`- Tel: ${company.primaryAddress.contactInfo.tel1}`);
+  }
+
+  if (company.primaryAddress?.address?.city) {
+    const addr = company.primaryAddress.address;
+    lines.push(`- Adres: ${addr.street ?? ''}, ${addr.zipCode ?? ''} ${addr.city}`);
+  }
+
+  if (company.tags && company.tags.length > 0) {
+    lines.push(`- Tagi: ${company.tags.join(', ')}`);
+  }
+
+  return lines.join('\n');
+}
+
+function formatState(state: string): string {
+  const states: Record<string, string> = {
+    A_POTENTIAL: 'Potencjalny',
+    B_ACTUAL: 'Aktualny',
+    C_DEFERRED: 'Odroczony',
+    D_ENDED: 'Zakończony',
+  };
+  return states[state] ?? state;
+}
+
+function formatRole(role: string): string {
+  const roles: Record<string, string> = {
+    A_SUBSCRIBER: 'Klient',
+    B_PARTNER: 'Partner',
+    C_SUPPLIER: 'Dostawca',
+    D_RIVAL: 'Konkurent',
+  };
+  return roles[role] ?? role;
+}
+
+/**
+ * Handle list companies tool
+ */
+export async function handleListCompanies(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const parsed = ListCompaniesSchema.parse(args);
+    const input = removeUndefined(parsed);
+    const service = getCompaniesService();
+    const result = await service.list(input);
+
+    if (result.companies.length === 0) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: 'Nie znaleziono żadnych firm spełniających podane kryteria.',
+          },
+        ],
+      };
+    }
+
+    const companiesList = result.companies.map(formatCompany).join('\n\n---\n\n');
+    const summary = `Znaleziono ${result.totalCount} firm (wyświetlono ${result.companies.length}, offset: ${result.offset})`;
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `${summary}\n\n${companiesList}`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleListCompanies', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle search companies tool
+ */
+export async function handleSearchCompanies(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const input = SearchCompaniesSchema.parse(args);
+    const service = getCompaniesService();
+    const result = await service.search(input);
+
+    if (result.companies.length === 0) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Nie znaleziono firm pasujących do zapytania: "${input.query}"`,
+          },
+        ],
+      };
+    }
+
+    const companiesList = result.companies.map(formatCompany).join('\n\n---\n\n');
+    const summary = `Wyniki wyszukiwania dla "${input.query}": ${result.totalCount} firm (wyświetlono ${result.companies.length})`;
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `${summary}\n\n${companiesList}`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleSearchCompanies', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle get company tool
+ */
+export async function handleGetCompany(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const input = GetCompanySchema.parse(args);
+    const service = getCompaniesService();
+    const result = await service.get(input);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: formatCompany(result.company),
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleGetCompany', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle create company tool
+ */
+export async function handleCreateCompany(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const parsed = CreateCompanySchema.parse(args);
+    const input = removeUndefined(parsed);
+    const service = getCompaniesService();
+    const result = await service.create(input);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `✅ Firma została utworzona pomyślnie!\n\n${formatCompany(result.company)}`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleCreateCompany', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle update company tool
+ */
+export async function handleUpdateCompany(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const parsed = UpdateCompanySchema.parse(args);
+    const input = removeUndefined(parsed);
+    const service = getCompaniesService();
+    const result = await service.update(input);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `✅ Firma została zaktualizowana pomyślnie!\n\n${formatCompany(result.company)}`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleUpdateCompany', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle delete company tool
+ */
+export async function handleDeleteCompany(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const input = DeleteCompanySchema.parse(args);
+    const service = getCompaniesService();
+    await service.delete(input.companyId);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `✅ Firma o ID ${input.companyId} została usunięta.`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleDeleteCompany', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+// ============================================================================
+// Tool Router
+// ============================================================================
+
+export async function handleCompanyTool(
+  toolName: string,
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  switch (toolName) {
+    case 'raynet_list_companies':
+      return handleListCompanies(args);
+    case 'raynet_search_companies':
+      return handleSearchCompanies(args);
+    case 'raynet_get_company':
+      return handleGetCompany(args);
+    case 'raynet_create_company':
+      return handleCreateCompany(args);
+    case 'raynet_update_company':
+      return handleUpdateCompany(args);
+    case 'raynet_delete_company':
+      return handleDeleteCompany(args);
+    default:
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Nieznane narzędzie: ${toolName}`,
+          },
+        ],
+      };
+  }
+}

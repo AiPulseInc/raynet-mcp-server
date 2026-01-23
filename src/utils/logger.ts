@@ -103,10 +103,9 @@ const prettyFormat = winston.format.combine(
   sanitizeFormat(),
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
-  winston.format.colorize(),
   winston.format.printf(({ timestamp, level, message, ...meta }) => {
-    const metaString = Object.keys(meta).length ? `\n${JSON.stringify(meta, null, 2)}` : '';
-    return `[${timestamp}] ${level}: ${message}${metaString}`;
+    const metaString = Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : '';
+    return `[${timestamp}] ${level.toUpperCase()}: ${message}${metaString}`;
   })
 );
 
