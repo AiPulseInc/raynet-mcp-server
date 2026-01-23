@@ -13,3 +13,11 @@ export {
   type CompanyResult,
   type CompanyListResult,
 } from './companies';
+
+export {
+  ContactsService,
+  getContactsService,
+  resetContactsService,
+  type ContactResult,
+  type ContactListResult,
+} from './contacts';

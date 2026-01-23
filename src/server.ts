@@ -12,7 +12,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { loadConfig, validateConfig } from './config/env';
 import { logger } from './utils/logger';
-import { companyToolDefinitions, handleCompanyTool } from './tools/companies';
+import { allToolDefinitions, handleTool } from './tools';
 import { getRaynetClient } from './api/client';
 
 // ============================================================================
@@ -40,10 +40,10 @@ export function createServer(): Server {
   // ==========================================================================
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    logger.debug('Listing available tools');
+    logger.debug('Listing available tools', { count: allToolDefinitions.length });
 
     return {
-      tools: companyToolDefinitions,
+      tools: allToolDefinitions,
     };
   });
 
@@ -57,21 +57,7 @@ export function createServer(): Server {
     logger.info('Tool called', { tool: name, args });
 
     try {
-      // Route to appropriate handler based on tool name
-      if (name.startsWith('raynet_') && name.includes('compan')) {
-        return await handleCompanyTool(name, args);
-      }
-
-      // Unknown tool
-      return {
-        content: [
-          {
-            type: 'text',
-            text: `Nieznane narzędzie: ${name}`,
-          },
-        ],
-        isError: true,
-      };
+      return await handleTool(name, args);
     } catch (error) {
       logger.error('Tool execution error', { tool: name, error });
 
@@ -112,6 +98,7 @@ export async function startServer(): Promise<void> {
   logger.info('Starting Raynet MCP Server', {
     instanceName: config.raynet.instanceName,
     nodeEnv: config.server.nodeEnv,
+    toolCount: allToolDefinitions.length,
   });
 
   // Initialize API client to verify connection
