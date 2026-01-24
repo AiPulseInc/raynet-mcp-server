@@ -3,8 +3,12 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-49%2F49%20passing-brightgreen.svg)](TEST_REPORT.md)
+[![Production](https://img.shields.io/badge/status-production%20ready-brightgreen.svg)](CLAUDE.md)
 
 A Model Context Protocol (MCP) server that provides seamless integration between Claude AI and Raynet CRM, enabling AI-powered CRM operations through natural language interactions.
+
+**Latest Update (2026-01-24):** All critical bugs fixed. 100% test pass rate (49/49 tests). Production ready.
 
 ## Overview
 
@@ -288,16 +292,34 @@ Rate limit headers are tracked and logged with each request.
 # Build the project
 npm run build
 
-# Run tests
-node scripts/test-companies.js
-node scripts/test-contacts.js
-node scripts/test-deals.js
-node scripts/test-activities.js
-node scripts/test-leads.js
+# Run comprehensive integration tests
+npx tsx tests/integration/comprehensive-test.ts
 
 # Type check
 npx tsc --noEmit
 ```
+
+## Testing
+
+The project includes a comprehensive integration test suite that validates all 47 MCP tools.
+
+**Test Results (2026-01-24):**
+- Total Tests: 49 test invocations
+- Pass Rate: 100% (49/49 passing)
+- Test Duration: ~120 seconds
+- Coverage: All 47 unique MCP tools tested
+
+**Test Breakdown:**
+| Category | Tests | Status |
+|----------|-------|--------|
+| Enum Tools | 8/8 | ✅ Passing |
+| Company Tools | 6/6 | ✅ Passing |
+| Contact Tools | 7/7 | ✅ Passing |
+| Deal Tools | 8/8 | ✅ Passing |
+| Lead Tools | 9/9 | ✅ Passing |
+| Activity Tools | 11/11 | ✅ Passing |
+
+See [TEST_REPORT.md](TEST_REPORT.md) for detailed test results.
 
 ## Troubleshooting
 
