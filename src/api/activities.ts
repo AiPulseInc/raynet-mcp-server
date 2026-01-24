@@ -11,7 +11,6 @@ import type {
   RaynetActivity,
   ActivityType,
   ActivityStatus,
-  ActivityPriority,
   ListActivitiesInput,
   SearchActivitiesInput,
   GetActivityInput,
@@ -32,11 +31,13 @@ interface ActivityPayload {
   title: string;
   scheduledFrom: string;
   scheduledTill: string;
+  deadline?: string;
+  owner?: number;
   company?: number;
   person?: number;
   businessCase?: number;
   description?: string;
-  priority?: ActivityPriority;
+  // Note: priority field is not supported by Raynet API for activities
   status?: ActivityStatus;
   solution?: string;
 }
@@ -70,12 +71,40 @@ const ACTIVITY_NAMES_PL: Record<ActivityType, string> = {
   Email: 'e-maila',
 };
 
+/**
+ * Normalize date string to Raynet API format: "YYYY-MM-DD HH:mm"
+ * Accepts ISO format, "YYYY-MM-DD HH:mm", "YYYY-MM-DD HH:mm:ss", etc.
+ */
+function normalizeDateTime(dateStr: string): string {
+  // If already in correct format "YYYY-MM-DD HH:mm", return as-is
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(dateStr)) {
+    return dateStr;
+  }
+
+  // Parse the date
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) {
+    // If invalid, return as-is and let API validate
+    return dateStr;
+  }
+
+  // Format as "YYYY-MM-DD HH:mm"
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
 // ============================================================================
 // Activities Service
 // ============================================================================
 
 export class ActivitiesService {
   private client: RaynetClient;
+  private cachedOwnerId: number | null = null;
 
   constructor(client?: RaynetClient) {
     this.client = client ?? getRaynetClient();
@@ -86,6 +115,45 @@ export class ActivitiesService {
    */
   private getEndpoint(type: ActivityType): string {
     return ACTIVITY_ENDPOINTS[type];
+  }
+
+  /**
+   * Get the owner ID for creating activities.
+   * Uses the owner ID from the first company found (as the authenticated user).
+   * Caches the result for subsequent calls.
+   */
+  private async getOwnerId(): Promise<number> {
+    if (this.cachedOwnerId !== null) {
+      return this.cachedOwnerId;
+    }
+
+    try {
+      // Get owner ID from an existing company (the authenticated user should be the owner)
+      const response = await this.client.getList<{ owner?: { id: number } }>('/company/', { limit: 1 });
+      const firstCompany = response.data[0];
+      if (firstCompany?.owner?.id) {
+        this.cachedOwnerId = firstCompany.owner.id;
+        return this.cachedOwnerId;
+      }
+    } catch (error) {
+      logger.warn('Failed to get owner ID from companies', { error });
+    }
+
+    // Fallback: try to get from an existing activity
+    try {
+      const response = await this.client.getList<{ owner?: { id: number } }>('/task/', { limit: 1 });
+      const firstTask = response.data[0];
+      if (firstTask?.owner?.id) {
+        this.cachedOwnerId = firstTask.owner.id;
+        return this.cachedOwnerId;
+      }
+    } catch (error) {
+      logger.warn('Failed to get owner ID from tasks', { error });
+    }
+
+    // Last resort: use a default value (should be configurable in production)
+    this.cachedOwnerId = 1;
+    return this.cachedOwnerId;
   }
 
   // ==========================================================================
@@ -303,7 +371,7 @@ export class ActivitiesService {
    * Create a new activity
    */
   async create(input: CreateActivityInput): Promise<ActivityResult> {
-    const { type, title, companyId, contactId, dealId, scheduledFrom, scheduledTill, description, priority } = input;
+    const { type, title, companyId, contactId, dealId, scheduledFrom, scheduledTill, description } = input;
 
     // Validate required fields
     if (!title || title.trim().length === 0) {
@@ -316,34 +384,55 @@ export class ActivitiesService {
       throw new ValidationError(['Data zakończenia jest wymagana']);
     }
 
+    // Get owner ID (required by Raynet API)
+    const ownerId = await this.getOwnerId();
+    const normalizedTill = normalizeDateTime(scheduledTill);
+
     const payload: ActivityPayload = {
       title: title.trim(),
-      scheduledFrom,
-      scheduledTill,
+      scheduledFrom: normalizeDateTime(scheduledFrom),
+      scheduledTill: normalizedTill,
+      deadline: normalizedTill,  // Raynet API requires deadline
+      owner: ownerId,  // Raynet API requires owner
     };
 
     // Optional fields
+    // Note: priority field is not supported by Raynet API for activities
     if (companyId) payload.company = companyId;
     if (contactId) payload.person = contactId;
     if (dealId) payload.businessCase = dealId;
     if (description) payload.description = description;
-    if (priority) payload.priority = priority;
 
-    logger.info('Creating activity', { type, title, companyId, dealId });
-
-    // Raynet API uses PUT for creating new records
-    const response = await this.client.put<RaynetActivity>(
-      `${this.getEndpoint(type)}/`,
-      payload
-    );
-
-    logger.info('Activity created', {
-      activityId: response.data.id,
+    logger.info('Creating activity', {
       type,
-      title: response.data.title,
+      title,
+      companyId,
+      dealId,
+      payload: JSON.stringify(payload),
     });
 
-    return { activity: response.data };
+    // Raynet API uses PUT for creating new records
+    try {
+      const response = await this.client.put<RaynetActivity>(
+        `${this.getEndpoint(type)}/`,
+        payload
+      );
+
+      logger.info('Activity created', {
+        activityId: response.data.id,
+        type,
+        title: response.data.title,
+      });
+
+      return { activity: response.data };
+    } catch (error) {
+      logger.error('Activity creation failed', {
+        type,
+        payload: JSON.stringify(payload),
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   }
 
   /**
@@ -371,11 +460,11 @@ export class ActivitiesService {
       _version: version,
     };
 
+    // Note: priority field is not supported by Raynet API for activities
     if (updates.title !== undefined) payload.title = updates.title.trim();
-    if (updates.scheduledFrom !== undefined) payload.scheduledFrom = updates.scheduledFrom;
-    if (updates.scheduledTill !== undefined) payload.scheduledTill = updates.scheduledTill;
+    if (updates.scheduledFrom !== undefined) payload.scheduledFrom = normalizeDateTime(updates.scheduledFrom);
+    if (updates.scheduledTill !== undefined) payload.scheduledTill = normalizeDateTime(updates.scheduledTill);
     if (updates.description !== undefined) payload.description = updates.description;
-    if (updates.priority !== undefined) payload.priority = updates.priority;
     if (updates.status !== undefined) payload.status = updates.status;
 
     logger.info('Updating activity', { activityId, activityType, version, updates: Object.keys(payload) });

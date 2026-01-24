@@ -338,8 +338,8 @@ export const companyToolDefinitions = [
 function formatCompany(company: RaynetCompany): string {
   const lines = [
     `**${company.name}** (ID: ${company.id})`,
-    `- Stan: ${formatState(company.state)} | Rola: ${formatRole(company.role)} | Rating: ${company.rating}`,
-    `- Właściciel: ${company.owner.fullName}`,
+    `- Stan: ${formatState(company.state)} | Rola: ${formatRole(company.role)} | Rating: ${company.rating ?? 'N/A'}`,
+    `- Właściciel: ${company.owner?.fullName ?? 'N/A'}`,
   ];
 
   if (company.regNumber) {

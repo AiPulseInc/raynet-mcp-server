@@ -189,12 +189,13 @@ export class CompaniesService {
 
     const payload: CompanyPayload = {
       name: input.name.trim(),
+      // Raynet API requires state, role, and rating - use defaults if not provided
+      state: input.state ?? 'A_POTENTIAL',
+      role: input.role ?? 'A_SUBSCRIBER',
+      rating: input.rating ?? 'B',
     };
 
-    // Optional fields
-    if (input.role) payload.role = input.role;
-    if (input.state) payload.state = input.state;
-    if (input.rating) payload.rating = input.rating;
+    // Optional fields - role, state, rating already set above
     if (input.ownerId) payload.owner = input.ownerId;
     if (input.categoryId) payload.category = input.categoryId;
     if (input.regNumber) payload.regNumber = input.regNumber;

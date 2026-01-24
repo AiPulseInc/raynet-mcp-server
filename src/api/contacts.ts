@@ -80,16 +80,22 @@ export class ContactsService {
 
   /**
    * List contacts with optional filters
+   * Note: Raynet API doesn't support filtering by company directly on person endpoint,
+   * so when companyId is provided, we fetch via company relationship endpoint.
    */
   async list(input: ListContactsInput = {}): Promise<ContactListResult> {
     const { limit = 20, offset = 0, companyId, ownerId } = input;
+
+    // If filtering by company, use relationship endpoint
+    if (companyId) {
+      return this.getByCompany(companyId, limit, offset);
+    }
 
     const params: ContactQueryParams = {
       limit,
       offset,
     };
 
-    if (companyId) params['primaryRelationship.company[EQ]'] = companyId;
     if (ownerId) params['owner[EQ]'] = ownerId;
 
     logger.info('Listing contacts', { params });
@@ -105,6 +111,68 @@ export class ContactsService {
       limit,
       offset,
     };
+  }
+
+  /**
+   * Get contacts linked to a specific company via relationship endpoint
+   */
+  private async getByCompany(companyId: number, limit: number, offset: number): Promise<ContactListResult> {
+    logger.info('Fetching contacts for company', { companyId });
+
+    try {
+      // Fetch relationships for the company
+      const response = await this.client.getList<{
+        id: number;
+        person: { id: number; firstName: string; lastName: string };
+        type: string;
+      }>(`/company/${companyId}/relationship/`, { limit: 100 });
+
+      // Extract unique person IDs from relationships
+      const personIds = new Set<number>();
+      for (const rel of response.data) {
+        if (rel.person?.id) {
+          personIds.add(rel.person.id);
+        }
+      }
+
+      if (personIds.size === 0) {
+        return {
+          contacts: [],
+          totalCount: 0,
+          limit,
+          offset,
+        };
+      }
+
+      // Fetch full person details for each ID (up to limit)
+      const idsToFetch = Array.from(personIds).slice(offset, offset + limit);
+      const contacts: RaynetPerson[] = [];
+
+      for (const personId of idsToFetch) {
+        try {
+          const personResponse = await this.client.getOne<RaynetPerson>(`${this.endpoint}/${personId}/`);
+          contacts.push(personResponse.data);
+        } catch (error) {
+          logger.warn('Failed to fetch person details', { personId, error });
+        }
+      }
+
+      return {
+        contacts,
+        totalCount: personIds.size,
+        limit,
+        offset,
+      };
+    } catch (error) {
+      logger.warn('Failed to fetch company relationships', { companyId, error });
+      // Fallback to empty result
+      return {
+        contacts: [],
+        totalCount: 0,
+        limit,
+        offset,
+      };
+    }
   }
 
   /**
@@ -138,16 +206,6 @@ export class ContactsService {
     };
   }
 
-  /**
-   * Get contacts by company
-   */
-  async getByCompany(companyId: number, limit = 20): Promise<ContactListResult> {
-    if (!companyId || companyId <= 0) {
-      throw new ValidationError(['ID firmy musi być liczbą dodatnią']);
-    }
-
-    return this.list({ companyId, limit });
-  }
 
   // ==========================================================================
   // Single Entity Operations

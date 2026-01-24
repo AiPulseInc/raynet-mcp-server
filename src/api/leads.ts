@@ -10,7 +10,6 @@ import { NotFoundError, ValidationError } from '../utils/errors';
 import type {
   RaynetLead,
   LeadStatus,
-  LeadPriority,
   ListLeadsInput,
   SearchLeadsInput,
   GetLeadInput,
@@ -34,7 +33,7 @@ interface LeadPayload {
   companyName?: string;
   owner?: number;
   leadPhase?: number;
-  priority?: LeadPriority;
+  // Note: priority field is read-only in Raynet API
   status?: LeadStatus;
   contactSource?: number;
   notice?: string;
@@ -65,6 +64,35 @@ export interface LeadConversionResult {
   company?: { id: number; name: string };
   contact?: { id: number; name: string };
   deal?: { id: number; name: string };
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Normalize website URL - ensure it has a protocol
+ */
+function normalizeWebsite(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  const trimmed = url.trim();
+  if (!trimmed) return undefined;
+  // Add https:// if no protocol specified
+  if (!/^https?:\/\//i.test(trimmed)) {
+    return `https://${trimmed}`;
+  }
+  return trimmed;
+}
+
+/**
+ * Normalize phone number - remove spaces and special chars except + and digits
+ */
+function normalizePhone(phone: string | undefined): string | undefined {
+  if (!phone) return undefined;
+  const trimmed = phone.trim();
+  if (!trimmed) return undefined;
+  // Keep only +, digits, and spaces (Raynet may accept formatted numbers)
+  return trimmed.replace(/[^\d+\s-]/g, '');
 }
 
 // ============================================================================
@@ -205,22 +233,24 @@ export class LeadsService {
     };
 
     // Optional fields
+    // Note: priority field is read-only in Raynet API - cannot be set on create
     if (input.firstName) payload.firstName = input.firstName;
     if (input.lastName) payload.lastName = input.lastName;
     if (input.companyName) payload.companyName = input.companyName;
     if (input.ownerId) payload.owner = input.ownerId;
     if (input.phaseId) payload.leadPhase = input.phaseId;
-    if (input.priority) payload.priority = input.priority;
     if (input.contactSourceId) payload.contactSource = input.contactSourceId;
     if (input.notice) payload.notice = input.notice;
     if (input.tags && input.tags.length > 0) payload.tags = input.tags;
 
-    // Contact info
-    if (input.email || input.phone || input.website) {
+    // Contact info - normalize values
+    const normalizedPhone = normalizePhone(input.phone);
+    const normalizedWebsite = normalizeWebsite(input.website);
+    if (input.email || normalizedPhone || normalizedWebsite) {
       payload.contactInfo = {};
-      if (input.email) payload.contactInfo.email = input.email;
-      if (input.phone) payload.contactInfo.tel1 = input.phone;
-      if (input.website) payload.contactInfo.www = input.website;
+      if (input.email) payload.contactInfo.email = input.email.trim();
+      if (normalizedPhone) payload.contactInfo.tel1 = normalizedPhone;
+      if (normalizedWebsite) payload.contactInfo.www = normalizedWebsite;
     }
 
     logger.info('Creating lead', { topic: input.topic });
@@ -265,22 +295,22 @@ export class LeadsService {
       _version: version,
     };
 
+    // Note: priority field is read-only in Raynet API - cannot be set on update
     if (updates.topic !== undefined) payload.topic = updates.topic.trim();
     if (updates.firstName !== undefined) payload.firstName = updates.firstName;
     if (updates.lastName !== undefined) payload.lastName = updates.lastName;
     if (updates.companyName !== undefined) payload.companyName = updates.companyName;
     if (updates.phaseId !== undefined) payload.leadPhase = updates.phaseId;
-    if (updates.priority !== undefined) payload.priority = updates.priority;
     if (updates.status !== undefined) payload.status = updates.status;
     if (updates.notice !== undefined) payload.notice = updates.notice;
     if (updates.tags !== undefined) payload.tags = updates.tags;
 
-    // Contact info updates
+    // Contact info updates - normalize values
     if (updates.email !== undefined || updates.phone !== undefined || updates.website !== undefined) {
       payload.contactInfo = {};
-      if (updates.email !== undefined) payload.contactInfo.email = updates.email;
-      if (updates.phone !== undefined) payload.contactInfo.tel1 = updates.phone;
-      if (updates.website !== undefined) payload.contactInfo.www = updates.website;
+      if (updates.email !== undefined) payload.contactInfo.email = updates.email.trim();
+      if (updates.phone !== undefined) payload.contactInfo.tel1 = normalizePhone(updates.phone) ?? updates.phone;
+      if (updates.website !== undefined) payload.contactInfo.www = normalizeWebsite(updates.website) ?? updates.website;
     }
 
     logger.info('Updating lead', { leadId, version, updates: Object.keys(payload) });
