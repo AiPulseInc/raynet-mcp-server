@@ -39,7 +39,7 @@ This is a Model Context Protocol (MCP) server that integrates Claude AI with Ray
 **Testing:**
 - Created comprehensive integration test suite (`tests/integration/comprehensive-test.ts`)
 - Tested all 47 MCP tools with both minimal and full field sets
-- Documented test results in TEST_REPORT.md
+- Documented test results in docs/TEST_REPORT.md
 - All 49 test invocations now pass (up from 59% pass rate)
 
 **Files Modified:**
@@ -49,7 +49,7 @@ This is a Model Context Protocol (MCP) server that integrates Claude AI with Ray
 - `src/api/contacts.ts` - Fixed company filtering
 - `src/api/leads.ts` - Removed unsupported priority field
 - `tests/integration/comprehensive-test.ts` - New comprehensive test suite
-- `TEST_REPORT.md` - New test documentation
+- `docs/TEST_REPORT.md` - New test documentation
 
 **Git Commit:** 770c425 (pushed to GitHub)
 
@@ -86,10 +86,36 @@ src/
 └── types/
     └── index.ts            # TypeScript type definitions
 
+docs/
+├── RAYNET-API.md            # Raynet API documentation
+├── TEST_REPORT.md           # Integration test results
+├── implementation-plan.md   # Project implementation plan
+├── test-results.md          # Historical test results
+├── openapi-spec.json        # Raynet OpenAPI specification
+├── api-exploration-results.json
+└── sessions/                # Session documentation
+    ├── SESSION_LOG.md
+    ├── NEXT_SESSION.md
+    └── SESSION_SUMMARY_*.md
+
+scripts/
+├── explore-api.js           # API exploration utility
+├── create-sprint-issues.sh  # GitHub issue creation
+└── manual-tests/            # Manual API test scripts
+    ├── test-activities.js
+    ├── test-companies.js
+    ├── test-contacts.js
+    ├── test-deals.js
+    ├── test-leads.js
+    ├── test-connection.js
+    └── test-instance-names.js
+
 tests/
 ├── integration/
 │   └── comprehensive-test.ts   # Full integration test suite
-└── [other test files]
+├── unit/
+│   └── config.test.ts
+└── setup.ts
 ```
 
 ### Key Design Patterns
@@ -542,7 +568,7 @@ delete leadData.priority;
 - [x] All tests passing (100% pass rate)
 - [x] Changes committed to git
 - [x] Changes pushed to GitHub
-- [x] Test report documented (TEST_REPORT.md)
+- [x] Test report documented (docs/TEST_REPORT.md)
 - [x] Code quality maintained (defensive programming)
 - [x] No technical debt introduced
 - [x] Session documented in CLAUDE.md

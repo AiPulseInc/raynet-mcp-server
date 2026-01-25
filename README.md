@@ -3,7 +3,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-49%2F49%20passing-brightgreen.svg)](TEST_REPORT.md)
+[![Tests](https://img.shields.io/badge/tests-49%2F49%20passing-brightgreen.svg)](docs/TEST_REPORT.md)
 [![Production](https://img.shields.io/badge/status-production%20ready-brightgreen.svg)](CLAUDE.md)
 
 A Model Context Protocol (MCP) server that provides seamless integration between Claude AI and Raynet CRM, enabling AI-powered CRM operations through natural language interactions.
@@ -319,7 +319,7 @@ The project includes a comprehensive integration test suite that validates all 4
 | Lead Tools | 9/9 | ✅ Passing |
 | Activity Tools | 11/11 | ✅ Passing |
 
-See [TEST_REPORT.md](TEST_REPORT.md) for detailed test results.
+See [docs/TEST_REPORT.md](docs/TEST_REPORT.md) for detailed test results.
 
 ## Troubleshooting
 
