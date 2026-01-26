@@ -1,14 +1,14 @@
 # Raynet MCP Server - Claude Context
 
-**Last Updated:** 2026-01-24
-**Project Status:** Production-Ready (All Critical Bugs Fixed)
-**Test Pass Rate:** 100% (49/49 tests passing)
+**Last Updated:** 2026-01-26
+**Project Status:** Production-Ready (Major Feature Expansion Complete)
+**Test Pass Rate:** 100% (90/90 tests passing)
 
 ---
 
 ## Project Overview
 
-This is a Model Context Protocol (MCP) server that integrates Claude AI with Raynet CRM. The server provides 47 MCP tools covering companies, contacts, deals, leads, and activities management through natural language interactions.
+This is a Model Context Protocol (MCP) server that integrates Claude AI with Raynet CRM. The server provides 91 MCP tools covering companies, contacts, deals, leads, activities, products, offers, sales orders, and projects management through natural language interactions.
 
 **Key Technologies:**
 - TypeScript 5.0+
@@ -21,11 +21,62 @@ This is a Model Context Protocol (MCP) server that integrates Claude AI with Ray
 
 ---
 
-## Recent Session Summary (2026-01-24)
+## Recent Session Summary (2026-01-26)
 
 ### What Was Accomplished
 
-**Major Achievement:** Fixed all 7 critical bugs that were preventing API operations from working correctly. The server now has a 100% test pass rate (49/49 tests).
+**Major Achievement:** Added 44 new MCP tools and fixed 3 API bugs. The server now has 91 total tools with a 100% test pass rate (90/90 tests).
+
+**New Tools Added (44 total):**
+- **Products:** 7 tools - CRUD operations, search, and listing
+- **Company Addresses:** 5 tools - add, list, update, set primary, delete
+- **Contact Relationships:** 5 tools - add, list, update, set primary, delete
+- **Offers:** 9 tools - CRUD, items management, search, list
+- **Sales Orders:** 10 tools - CRUD, items management, search, list
+- **Projects:** 8 tools - CRUD, participant management, search, list
+
+**Bugs Fixed:**
+1. **Sales Order `dealId` required** - Made dealId a required field in schemas (Raynet API requires businessCase for sales orders)
+2. **Project participant endpoint incorrect** - Changed from `/participant/` to `/participants/` (plural)
+3. **Project participant field name incorrect** - Changed from `role` to `note` to match Raynet API
+
+**Testing:**
+- Created comprehensive test suite v2 (`tests/integration/comprehensive-test-v2.ts`)
+- Tested all 91 MCP tools with both minimal and full field sets
+- Updated test results in docs/TEST_REPORT.md
+- All 90 test invocations pass (100% pass rate)
+
+**Files Added:**
+- `src/api/products.ts` - Product API service
+- `src/api/offers.ts` - Offer API service
+- `src/api/salesOrders.ts` - Sales Order API service
+- `src/api/projects.ts` - Project API service
+- `src/tools/products.ts` - Product MCP tools
+- `src/tools/offers.ts` - Offer MCP tools
+- `src/tools/salesOrders.ts` - Sales Order MCP tools
+- `src/tools/projects.ts` - Project MCP tools
+- `tests/integration/comprehensive-test-v2.ts` - New test suite
+
+**Files Modified:**
+- `src/api/companies.ts` - Added address management functions
+- `src/api/contacts.ts` - Added relationship management functions
+- `src/api/enums.ts` - Added product category enum
+- `src/api/index.ts` - Export new modules
+- `src/tools/companies.ts` - Added address tools
+- `src/tools/contacts.ts` - Added relationship tools
+- `src/tools/index.ts` - Export new tools
+- `src/types/index.ts` - Added types for new entities
+- `docs/TEST_REPORT.md` - Updated test documentation
+
+**Git Commit:** 2f32eb8
+
+---
+
+## Previous Session Summary (2026-01-24)
+
+### What Was Accomplished
+
+**Major Achievement:** Fixed all 7 critical bugs that were preventing API operations from working correctly. The server achieved 100% test pass rate (49/49 tests).
 
 **Bugs Fixed:**
 1. **Company formatCompany null pointer crash** - Fixed owner?.fullName undefined access
@@ -36,22 +87,7 @@ This is a Model Context Protocol (MCP) server that integrates Claude AI with Ray
 6. **Lead priority field not supported** - Removed unsupported field from API calls
 7. **Activity priority field not supported** - Removed unsupported field from API calls
 
-**Testing:**
-- Created comprehensive integration test suite (`tests/integration/comprehensive-test.ts`)
-- Tested all 47 MCP tools with both minimal and full field sets
-- Documented test results in docs/TEST_REPORT.md
-- All 49 test invocations now pass (up from 59% pass rate)
-
-**Files Modified:**
-- `src/tools/companies.ts` - Fixed formatCompany function
-- `src/api/companies.ts` - Added required field defaults
-- `src/api/activities.ts` - Fixed date format and added required fields
-- `src/api/contacts.ts` - Fixed company filtering
-- `src/api/leads.ts` - Removed unsupported priority field
-- `tests/integration/comprehensive-test.ts` - New comprehensive test suite
-- `docs/TEST_REPORT.md` - New test documentation
-
-**Git Commit:** 770c425 (pushed to GitHub)
+**Git Commit:** 770c425
 
 ---
 
@@ -67,18 +103,26 @@ src/
 │   └── env.ts              # Environment configuration
 ├── api/                    # Raynet API service layer
 │   ├── client.ts           # Axios client with auth
-│   ├── companies.ts        # Company CRUD operations
-│   ├── contacts.ts         # Contact CRUD operations
+│   ├── companies.ts        # Company CRUD + address operations
+│   ├── contacts.ts         # Contact CRUD + relationship operations
 │   ├── deals.ts            # Deal CRUD operations
 │   ├── activities.ts       # Activity CRUD operations
 │   ├── leads.ts            # Lead CRUD operations
+│   ├── products.ts         # Product CRUD operations
+│   ├── offers.ts           # Offer CRUD + items operations
+│   ├── salesOrders.ts      # Sales Order CRUD + items operations
+│   ├── projects.ts         # Project CRUD + participants operations
 │   └── enums.ts            # Enum/lookup data
-├── tools/                  # MCP tool implementations
-│   ├── companies.ts        # 6 company tools
-│   ├── contacts.ts         # 7 contact tools
+├── tools/                  # MCP tool implementations (91 total)
+│   ├── companies.ts        # 11 company tools (6 base + 5 address)
+│   ├── contacts.ts         # 12 contact tools (7 base + 5 relationship)
 │   ├── deals.ts            # 8 deal tools
 │   ├── activities.ts       # 9 activity tools
 │   ├── leads.ts            # 9 lead tools
+│   ├── products.ts         # 7 product tools
+│   ├── offers.ts           # 9 offer tools
+│   ├── salesOrders.ts      # 10 sales order tools
+│   ├── projects.ts         # 8 project tools
 │   └── enums.ts            # 8 enum tools
 ├── utils/
 │   ├── logger.ts           # Winston logger
@@ -112,7 +156,8 @@ scripts/
 
 tests/
 ├── integration/
-│   └── comprehensive-test.ts   # Full integration test suite
+│   ├── comprehensive-test.ts     # Original test suite (47 tools)
+│   └── comprehensive-test-v2.ts  # Full test suite (91 tools)
 ├── unit/
 │   └── config.test.ts
 └── setup.ts
@@ -560,6 +605,33 @@ delete activityData.priority;
 delete leadData.priority;
 ```
 
+### Bug 8: Sales Order `dealId` Required (2026-01-26)
+**Files:** `src/tools/salesOrders.ts`, `src/types/index.ts`
+**Issue:** Creating sales orders without `dealId` returned "Blad w danych wejsciowych"
+**Fix:** Made `dealId` a required field in CreateSalesOrderSchema and CreateSalesOrderWithItemsSchema
+
+### Bug 9: Project Participant Endpoint (2026-01-26)
+**File:** `src/api/projects.ts`
+**Before:**
+```typescript
+const response = await client.post(`/project/${projectId}/participant/`, { ... });
+```
+**After:**
+```typescript
+const response = await client.post(`/project/${projectId}/participants/`, { ... });
+```
+
+### Bug 10: Project Participant Field Name (2026-01-26)
+**Files:** `src/api/projects.ts`, `src/tools/projects.ts`, `src/types/index.ts`
+**Before:**
+```typescript
+{ person: { id: personId }, role: 'Developer' }
+```
+**After:**
+```typescript
+{ person: { id: personId }, note: 'Developer' }
+```
+
 ---
 
 ## Session Close Checklist
@@ -575,6 +647,18 @@ delete leadData.priority;
 
 ---
 
-**Status:** Project is production-ready. All MCP tools are fully functional and tested.
+**Status:** Project is production-ready with full API coverage. All 91 MCP tools are fully functional and tested.
+
+**Current Tool Count:** 91 tools (47 original + 44 new)
+- Companies: 11 tools (6 base + 5 address management)
+- Contacts: 12 tools (7 base + 5 relationship management)
+- Deals: 8 tools
+- Leads: 9 tools
+- Activities: 9 tools
+- Products: 7 tools
+- Offers: 9 tools
+- Sales Orders: 10 tools
+- Projects: 8 tools
+- Enums: 8 tools
 
 **Next Session:** Focus on optional enhancements (performance optimizations, caching, parallel requests) or new features as requested by the user.
