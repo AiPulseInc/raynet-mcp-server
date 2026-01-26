@@ -3,12 +3,12 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-49%2F49%20passing-brightgreen.svg)](docs/TEST_REPORT.md)
+[![Tests](https://img.shields.io/badge/tests-90%2F90%20passing-brightgreen.svg)](docs/TEST_REPORT.md)
 [![Production](https://img.shields.io/badge/status-production%20ready-brightgreen.svg)](CLAUDE.md)
 
 A Model Context Protocol (MCP) server that provides seamless integration between Claude AI and Raynet CRM, enabling AI-powered CRM operations through natural language interactions.
 
-**Latest Update (2026-01-24):** All critical bugs fixed. 100% test pass rate (49/49 tests). Production ready.
+**Latest Update (2026-01-26):** Major feature expansion with 91 MCP tools. 100% test pass rate (90/90 tests). Production ready.
 
 ## Overview
 
@@ -16,14 +16,14 @@ This MCP server bridges Claude AI with the Raynet CRM system, allowing users to 
 
 ### Key Features
 
-- **Natural Language CRM Operations**: Manage companies, contacts, deals, activities, and leads through conversational AI
+- **Natural Language CRM Operations**: Manage companies, contacts, deals, activities, leads, products, offers, sales orders, and projects through conversational AI
 - **Polish Language Support**: Native Polish interface with proper diacritics handling
-- **47 MCP Tools**: Comprehensive coverage of CRM workflows
+- **91 MCP Tools**: Comprehensive coverage of CRM workflows including sales pipeline, quoting, and project management
 - **Real-time Integration**: stdio transport for responsive interactions
 - **Enterprise-Ready**: Rate limiting, error handling, and retry logic
 - **Claude Desktop Compatible**: Works with Claude Desktop MCP configuration
 
-## Available Tools (47 Total)
+## Available Tools (91 Total)
 
 ### Companies (Firmy) - 6 Tools
 
@@ -35,6 +35,16 @@ This MCP server bridges Claude AI with the Raynet CRM system, allowing users to 
 | `raynet_create_company` | Create a new company record |
 | `raynet_update_company` | Update company details |
 | `raynet_delete_company` | Delete a company |
+
+### Company Addresses (Adresy firm) - 5 Tools (NEW)
+
+| Tool | Description |
+|------|-------------|
+| `raynet_list_company_addresses` | List all addresses for a company |
+| `raynet_add_company_address` | Add a new address to a company |
+| `raynet_update_company_address` | Update an existing company address |
+| `raynet_delete_company_address` | Delete a company address |
+| `raynet_set_primary_company_address` | Set an address as the primary address |
 
 ### Contacts (Kontakty) - 7 Tools
 
@@ -48,7 +58,29 @@ This MCP server bridges Claude AI with the Raynet CRM system, allowing users to 
 | `raynet_delete_contact` | Delete a contact |
 | `raynet_link_contact_to_company` | Associate contact with company |
 
-### Deals (Szanse sprzedaży) - 8 Tools
+### Contact Relationships (Relacje kontaktow) - 5 Tools (NEW)
+
+| Tool | Description |
+|------|-------------|
+| `raynet_list_contact_relationships` | List all company relationships for a contact |
+| `raynet_add_contact_relationship` | Add a new company relationship to a contact |
+| `raynet_update_contact_relationship` | Update an existing contact-company relationship |
+| `raynet_delete_contact_relationship` | Delete a contact-company relationship |
+| `raynet_set_primary_contact_relationship` | Set a relationship as the primary one |
+
+### Products (Produkty) - 7 Tools (NEW)
+
+| Tool | Description |
+|------|-------------|
+| `raynet_list_products` | List products with filters (category, active status) |
+| `raynet_search_products` | Search products by name or code |
+| `raynet_get_product` | Get detailed product information |
+| `raynet_create_product` | Create a new product |
+| `raynet_update_product` | Update product details |
+| `raynet_delete_product` | Delete a product |
+| `raynet_get_product_categories` | Get product categories for filtering |
+
+### Deals (Szanse sprzedazy) - 8 Tools
 
 | Tool | Description |
 |------|-------------|
@@ -61,7 +93,49 @@ This MCP server bridges Claude AI with the Raynet CRM system, allowing users to 
 | `raynet_delete_deal` | Delete a deal |
 | `raynet_get_pipeline_value` | Get total pipeline value and statistics |
 
-### Activities (Aktywności) - 9 Tools
+### Offers (Oferty) - 9 Tools (NEW)
+
+| Tool | Description |
+|------|-------------|
+| `raynet_list_offers` | List offers with filters (status, company, deal, owner) |
+| `raynet_search_offers` | Search offers by name |
+| `raynet_get_offer` | Get offer details including line items |
+| `raynet_create_offer` | Create a new offer/quote |
+| `raynet_create_offer_with_items` | Create offer with line items in one call |
+| `raynet_update_offer` | Update offer details and status |
+| `raynet_delete_offer` | Delete an offer |
+| `raynet_add_offer_item` | Add a line item to an existing offer |
+| `raynet_remove_offer_item` | Remove a line item from an offer |
+
+### Sales Orders (Zamowienia sprzedazy) - 10 Tools (NEW)
+
+| Tool | Description |
+|------|-------------|
+| `raynet_list_sales_orders` | List sales orders with filters |
+| `raynet_search_sales_orders` | Search sales orders by name |
+| `raynet_get_sales_order` | Get sales order details including line items |
+| `raynet_create_sales_order` | Create a new sales order |
+| `raynet_create_sales_order_with_items` | Create sales order with line items |
+| `raynet_create_sales_order_from_offer` | Convert an offer to a sales order |
+| `raynet_update_sales_order` | Update sales order details |
+| `raynet_delete_sales_order` | Delete a sales order |
+| `raynet_add_sales_order_item` | Add a line item to a sales order |
+| `raynet_remove_sales_order_item` | Remove a line item from a sales order |
+
+### Projects (Projekty) - 8 Tools (NEW)
+
+| Tool | Description |
+|------|-------------|
+| `raynet_list_projects` | List projects with filters (status, company, owner) |
+| `raynet_search_projects` | Search projects by name |
+| `raynet_get_project` | Get project details including participants |
+| `raynet_create_project` | Create a new project |
+| `raynet_update_project` | Update project details and status |
+| `raynet_delete_project` | Delete a project |
+| `raynet_add_project_participant` | Add a participant to a project |
+| `raynet_remove_project_participant` | Remove a participant from a project |
+
+### Activities (Aktywnosci) - 9 Tools
 
 | Tool | Description |
 |------|-------------|
@@ -89,7 +163,7 @@ This MCP server bridges Claude AI with the Raynet CRM system, allowing users to 
 | `raynet_convert_lead` | Convert lead to company/contact/deal |
 | `raynet_get_lead_stats` | Get lead statistics |
 
-### Enums (Słowniki) - 8 Tools
+### Enums (Slowniki) - 8 Tools
 
 | Tool | Description |
 |------|-------------|
@@ -153,7 +227,7 @@ LOG_LEVEL=info
 
 2. **Instance Name**: Your CRM instance identifier (found in your Raynet URL)
 
-3. **API Key**: Generate in Raynet CRM under Settings → API Keys
+3. **API Key**: Generate in Raynet CRM under Settings -> API Keys
 
 ### Running the Server
 
@@ -191,39 +265,51 @@ Add to your Claude Desktop MCP configuration (`~/.config/claude/claude_desktop_c
 
 **Creating a Company:**
 ```
-User: "Dodaj nową firmę TEST Sp. z o.o. z oceną A"
+User: "Dodaj nowa firme TEST Sp. z o.o. z ocena A"
 Assistant: [Uses raynet_create_company]
-Response: "✅ Utworzono firmę TEST Sp. z o.o. (ID: 12345) z oceną A"
+Response: "Utworzono firme TEST Sp. z o.o. (ID: 12345) z ocena A"
 ```
 
 **Checking Pipeline:**
 ```
-User: "Jaka jest wartość naszego pipeline?"
+User: "Jaka jest wartosc naszego pipeline?"
 Assistant: [Uses raynet_get_pipeline_value]
-Response: "📊 Wartość Pipeline
+Response: "Wartosc Pipeline
 - Liczba aktywnych szans: 4
-- Łączna wartość: 42 000 zł
-- Wartość ważona: 21 000 zł"
+- Laczna wartosc: 42 000 zl
+- Wartosc wazona: 21 000 zl"
 ```
 
-**Managing Activities:**
+**Creating an Offer:**
 ```
-User: "Pokaż moje zadania na dziś"
-Assistant: [Uses raynet_get_today_activities]
-Response: "📅 Aktywności na dziś (czwartek, 23 stycznia 2026)
-- Spotkanie z klientem ABC (10:00-11:00)
-- Telefon do Jana Kowalskiego (14:00)"
+User: "Stworz oferte dla firmy ABC z produktem X za 5000 zl"
+Assistant: [Uses raynet_create_offer_with_items]
+Response: "Oferta utworzona pomyslnie!
+**Oferta ABC - Produkt X** (ID: 456)
+- Status: Aktywna
+- Wartosc: 5 000.00 PLN"
+```
+
+**Managing Projects:**
+```
+User: "Pokaz aktywne projekty"
+Assistant: [Uses raynet_list_projects with status filter]
+Response: "Znaleziono 3 projektow:
+**Wdrozenie CRM** (ID: 789)
+- Status: Aktywny
+- Firma: ABC Sp. z o.o.
+- Okres: 2026-01-01 - 2026-03-31"
 ```
 
 **Working with Leads:**
 ```
-User: "Pokaż statystyki leadów"
+User: "Pokaz statystyki leadow"
 Assistant: [Uses raynet_get_lead_stats]
-Response: "📊 Statystyki Leadów
-- Łącznie: 15
-- 🟢 Aktywne: 8
-- ✅ Skonwertowane: 5
-- ❌ Anulowane: 2"
+Response: "Statystyki Leadow
+- Lacznie: 15
+- Aktywne: 8
+- Skonwertowane: 5
+- Anulowane: 2"
 ```
 
 ## Project Structure
@@ -242,13 +328,21 @@ raynet-mcp-server/
 │   │   ├── deals.ts          # Deals service
 │   │   ├── activities.ts     # Activities service
 │   │   ├── leads.ts          # Leads service
+│   │   ├── products.ts       # Products service (NEW)
+│   │   ├── offers.ts         # Offers service (NEW)
+│   │   ├── salesOrders.ts    # Sales orders service (NEW)
+│   │   ├── projects.ts       # Projects service (NEW)
 │   │   └── enums.ts          # Enums/lookups service
 │   ├── tools/
-│   │   ├── companies.ts      # Company MCP tools
-│   │   ├── contacts.ts       # Contact MCP tools
+│   │   ├── companies.ts      # Company & address MCP tools
+│   │   ├── contacts.ts       # Contact & relationship MCP tools
 │   │   ├── deals.ts          # Deal MCP tools
 │   │   ├── activities.ts     # Activity MCP tools
 │   │   ├── leads.ts          # Lead MCP tools
+│   │   ├── products.ts       # Product MCP tools (NEW)
+│   │   ├── offers.ts         # Offer MCP tools (NEW)
+│   │   ├── salesOrders.ts    # Sales order MCP tools (NEW)
+│   │   ├── projects.ts       # Project MCP tools (NEW)
 │   │   └── enums.ts          # Enum MCP tools
 │   ├── utils/
 │   │   ├── logger.ts         # Winston logger
@@ -262,7 +356,8 @@ raynet-mcp-server/
 │   ├── test-activities.js    # Activity tests
 │   └── test-leads.js         # Lead tests
 ├── docs/
-│   └── RAYNET-API.md         # API documentation
+│   ├── RAYNET-API.md         # API documentation
+│   └── TEST_REPORT.md        # Integration test results
 ├── .env.example
 ├── package.json
 ├── tsconfig.json
@@ -301,23 +396,27 @@ npx tsc --noEmit
 
 ## Testing
 
-The project includes a comprehensive integration test suite that validates all 47 MCP tools.
+The project includes a comprehensive integration test suite that validates all 91 MCP tools.
 
-**Test Results (2026-01-24):**
-- Total Tests: 49 test invocations
-- Pass Rate: 100% (49/49 passing)
-- Test Duration: ~120 seconds
-- Coverage: All 47 unique MCP tools tested
+**Test Results (2026-01-26):**
+- Total Tests: 90 test invocations
+- Pass Rate: 100% (90/90 passing)
+- Test Duration: ~180 seconds
+- Coverage: All 91 unique MCP tools tested
 
 **Test Breakdown:**
 | Category | Tests | Status |
 |----------|-------|--------|
-| Enum Tools | 8/8 | ✅ Passing |
-| Company Tools | 6/6 | ✅ Passing |
-| Contact Tools | 7/7 | ✅ Passing |
-| Deal Tools | 8/8 | ✅ Passing |
-| Lead Tools | 9/9 | ✅ Passing |
-| Activity Tools | 11/11 | ✅ Passing |
+| Enum Tools | 8/8 | Passing |
+| Company Tools | 11/11 | Passing |
+| Contact Tools | 12/12 | Passing |
+| Product Tools | 7/7 | Passing |
+| Deal Tools | 8/8 | Passing |
+| Offer Tools | 9/9 | Passing |
+| Sales Order Tools | 10/10 | Passing |
+| Project Tools | 8/8 | Passing |
+| Lead Tools | 9/9 | Passing |
+| Activity Tools | 8/8 | Passing |
 
 See [docs/TEST_REPORT.md](docs/TEST_REPORT.md) for detailed test results.
 
@@ -336,6 +435,11 @@ See [docs/TEST_REPORT.md](docs/TEST_REPORT.md) for detailed test results.
 **Issue: "Connection timeout"**
 ```bash
 # Increase timeout in config or check network connectivity
+```
+
+**Issue: "Date format error"**
+```bash
+# Raynet expects dates in YYYY-MM-DD HH:mm format, not ISO 8601
 ```
 
 ## License
