@@ -9,6 +9,7 @@ import { logger } from '../utils/logger';
 import { NotFoundError, ValidationError } from '../utils/errors';
 import type {
   RaynetPerson,
+  RaynetPersonRelationship,
   RaynetListResponse,
   RaynetResponse,
   ListContactsInput,
@@ -17,6 +18,11 @@ import type {
   CreateContactInput,
   UpdateContactInput,
   LinkContactToCompanyInput,
+  ListContactRelationshipsInput,
+  AddContactRelationshipInput,
+  UpdateContactRelationshipInput,
+  DeleteContactRelationshipInput,
+  SetPrimaryContactRelationshipInput,
 } from '../types';
 
 // ============================================================================
@@ -60,6 +66,17 @@ export interface ContactListResult {
   totalCount: number;
   limit: number;
   offset: number;
+}
+
+/** Result of relationship operations */
+export interface RelationshipResult {
+  relationship: RaynetPersonRelationship;
+}
+
+/** Result of relationship list operations */
+export interface RelationshipListResult {
+  relationships: RaynetPersonRelationship[];
+  totalCount: number;
 }
 
 // ============================================================================
@@ -432,6 +449,165 @@ export class ContactsService {
       }
       throw error;
     }
+  }
+
+  /**
+   * List all relationships for a contact
+   */
+  async listRelationships(input: ListContactRelationshipsInput): Promise<RelationshipListResult> {
+    const { contactId } = input;
+
+    if (!contactId || contactId <= 0) {
+      throw new ValidationError(['ID kontaktu musi być liczbą dodatnią']);
+    }
+
+    logger.info('Listing contact relationships', { contactId });
+
+    // Get the contact with full details including relationships
+    const response = await this.client.getOne<RaynetPerson>(
+      `${this.endpoint}/${contactId}/`
+    );
+
+    const relationships = response.data.relationships ?? [];
+
+    return {
+      relationships,
+      totalCount: relationships.length,
+    };
+  }
+
+  /**
+   * Add a new relationship to a contact
+   */
+  async addRelationship(input: AddContactRelationshipInput): Promise<RelationshipResult> {
+    const { contactId, companyId, relationshipType, primary } = input;
+
+    if (!contactId || contactId <= 0) {
+      throw new ValidationError(['ID kontaktu musi być liczbą dodatnią']);
+    }
+    if (!companyId || companyId <= 0) {
+      throw new ValidationError(['ID firmy musi być liczbą dodatnią']);
+    }
+
+    const payload = {
+      company: companyId,
+      type: relationshipType ?? 'Pracownik',
+      primary: primary ?? false,
+    };
+
+    logger.info('Adding contact relationship', { contactId, companyId });
+
+    const response = await this.client.put<RaynetPersonRelationship>(
+      `${this.endpoint}/${contactId}/relationship/`,
+      payload
+    );
+
+    logger.info('Contact relationship added', { contactId, relationshipId: response.data.id });
+
+    return { relationship: response.data };
+  }
+
+  /**
+   * Update an existing contact relationship
+   */
+  async updateRelationship(input: UpdateContactRelationshipInput): Promise<RelationshipResult> {
+    const { contactId, relationshipId, relationshipType } = input;
+
+    if (!contactId || contactId <= 0) {
+      throw new ValidationError(['ID kontaktu musi być liczbą dodatnią']);
+    }
+
+    if (!relationshipId || relationshipId <= 0) {
+      throw new ValidationError(['ID relacji musi być liczbą dodatnią']);
+    }
+
+    if (!relationshipType) {
+      throw new ValidationError(['Typ relacji jest wymagany']);
+    }
+
+    const payload = {
+      type: relationshipType,
+    };
+
+    logger.info('Updating contact relationship', { contactId, relationshipId });
+
+    await this.client.post<RaynetPersonRelationship>(
+      `${this.endpoint}/${contactId}/relationship/${relationshipId}/`,
+      payload
+    );
+
+    // Fetch updated relationships
+    const relResult = await this.listRelationships({ contactId });
+    const updatedRelationship = relResult.relationships.find(r => r.id === relationshipId);
+
+    if (!updatedRelationship) {
+      throw new NotFoundError('relacji', relationshipId);
+    }
+
+    logger.info('Contact relationship updated', { contactId, relationshipId });
+
+    return { relationship: updatedRelationship };
+  }
+
+  /**
+   * Delete a contact relationship
+   */
+  async deleteRelationship(input: DeleteContactRelationshipInput): Promise<void> {
+    const { contactId, relationshipId } = input;
+
+    if (!contactId || contactId <= 0) {
+      throw new ValidationError(['ID kontaktu musi być liczbą dodatnią']);
+    }
+
+    if (!relationshipId || relationshipId <= 0) {
+      throw new ValidationError(['ID relacji musi być liczbą dodatnią']);
+    }
+
+    logger.info('Deleting contact relationship', { contactId, relationshipId });
+
+    try {
+      await this.client.delete(`${this.endpoint}/${contactId}/relationship/${relationshipId}/`);
+      logger.info('Contact relationship deleted', { contactId, relationshipId });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new NotFoundError('relacji', relationshipId);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Set a relationship as primary
+   */
+  async setPrimaryRelationship(input: SetPrimaryContactRelationshipInput): Promise<RelationshipResult> {
+    const { contactId, relationshipId } = input;
+
+    if (!contactId || contactId <= 0) {
+      throw new ValidationError(['ID kontaktu musi być liczbą dodatnią']);
+    }
+
+    if (!relationshipId || relationshipId <= 0) {
+      throw new ValidationError(['ID relacji musi być liczbą dodatnią']);
+    }
+
+    logger.info('Setting primary contact relationship', { contactId, relationshipId });
+
+    await this.client.post<void>(
+      `${this.endpoint}/${contactId}/relationship/${relationshipId}/`,
+      { primary: true }
+    );
+
+    // Fetch updated relationships
+    const relResult = await this.listRelationships({ contactId });
+    const updatedRelationship = relResult.relationships.find(r => r.id === relationshipId);
+
+    if (!updatedRelationship) {
+      throw new NotFoundError('relacji', relationshipId);
+    }
+
+    logger.info('Primary contact relationship set', { contactId, relationshipId });
+
+    return { relationship: updatedRelationship };
   }
 
   // ==========================================================================

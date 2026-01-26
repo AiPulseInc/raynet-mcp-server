@@ -245,6 +245,7 @@ export interface RaynetPersonRelationship {
   id: number;
   type: string;
   company: RaynetReference;
+  primary?: boolean;
 }
 
 export interface RaynetPerson {
@@ -444,6 +445,153 @@ export interface RaynetLead {
   rowInfo: RaynetRowInfo;
   securityLevel: RaynetSecurityLevel;
   attachments?: RaynetFileInfo[];
+  _version: number;
+}
+
+// ============================================================================
+// Product Types
+// ============================================================================
+
+export interface RaynetProduct {
+  id: number;
+  code?: string;
+  name: string;
+  description?: string;
+  unit?: string;
+  price?: number;
+  taxRate?: number;
+  active: boolean;
+  currency?: RaynetCurrency;
+  category?: RaynetReference;
+  owner?: RaynetOwnerReference;
+  customFields?: Record<string, unknown>;
+  rowInfo?: RaynetRowInfo;
+  _version: number;
+}
+
+// ============================================================================
+// Offer Types
+// ============================================================================
+
+/** Offer status */
+export type OfferStatus = 'B_ACTIVE' | 'E_WIN' | 'F_LOST' | 'G_STORNO';
+
+export interface RaynetOfferItem {
+  id: number;
+  product?: RaynetReference;
+  name: string;
+  code?: string;
+  description?: string;
+  unit?: string;
+  quantity: number;
+  price: number;
+  taxRate?: number;
+  discount?: number;
+  totalPrice: number;
+}
+
+export interface RaynetOffer {
+  id: number;
+  code?: string;
+  name: string;
+  status: OfferStatus;
+  validFrom: string;
+  validTill?: string;
+  totalAmount: number;
+  totalAmountWithTax?: number;
+  company: RaynetReference;
+  person?: RaynetReference;
+  businessCase?: RaynetReference;
+  owner: RaynetOwnerReference;
+  currency: RaynetCurrency;
+  category?: RaynetReference;
+  description?: string;
+  items?: RaynetOfferItem[];
+  tags?: string[];
+  customFields?: Record<string, unknown>;
+  rowInfo?: RaynetRowInfo;
+  securityLevel?: RaynetSecurityLevel;
+  _version: number;
+}
+
+// ============================================================================
+// Sales Order Types
+// ============================================================================
+
+/** Sales order status */
+export type SalesOrderStatus = 'B_ACTIVE' | 'E_WIN' | 'F_LOST' | 'G_STORNO';
+
+export interface RaynetSalesOrderItem {
+  id: number;
+  product?: RaynetReference;
+  name: string;
+  code?: string;
+  description?: string;
+  unit?: string;
+  quantity: number;
+  price: number;
+  taxRate?: number;
+  discount?: number;
+  totalPrice: number;
+}
+
+export interface RaynetSalesOrder {
+  id: number;
+  code?: string;
+  name: string;
+  status: SalesOrderStatus;
+  orderDate: string;
+  deliveryDate?: string;
+  totalAmount: number;
+  totalAmountWithTax?: number;
+  company: RaynetReference;
+  person?: RaynetReference;
+  businessCase?: RaynetReference;
+  offer?: RaynetReference;
+  owner: RaynetOwnerReference;
+  currency: RaynetCurrency;
+  category?: RaynetReference;
+  description?: string;
+  deliveryAddress?: RaynetCompanyAddress;
+  invoiceAddress?: RaynetCompanyAddress;
+  items?: RaynetSalesOrderItem[];
+  tags?: string[];
+  customFields?: Record<string, unknown>;
+  rowInfo?: RaynetRowInfo;
+  securityLevel?: RaynetSecurityLevel;
+  _version: number;
+}
+
+// ============================================================================
+// Project Types
+// ============================================================================
+
+/** Project status */
+export type ProjectStatus = 'A_DRAFT' | 'B_ACTIVE' | 'C_FINISHED' | 'D_CANCELLED';
+
+export interface RaynetProjectParticipant {
+  id: number;
+  person: RaynetReference;
+  role?: string;
+}
+
+export interface RaynetProject {
+  id: number;
+  code?: string;
+  name: string;
+  status: ProjectStatus;
+  startDate?: string;
+  endDate?: string;
+  company: RaynetReference;
+  businessCase?: RaynetReference;
+  owner: RaynetOwnerReference;
+  category?: RaynetReference;
+  description?: string;
+  participants?: RaynetProjectParticipant[];
+  tags?: string[];
+  customFields?: Record<string, unknown>;
+  rowInfo?: RaynetRowInfo;
+  securityLevel?: RaynetSecurityLevel;
   _version: number;
 }
 
@@ -749,6 +897,353 @@ export interface ConvertLeadInput {
   createContact?: boolean;
   createDeal?: boolean;
   dealName?: string;
+}
+
+// ============================================================================
+// MCP Tool Input Types - Products
+// ============================================================================
+
+export interface ListProductsInput {
+  limit?: number;
+  offset?: number;
+  categoryId?: number;
+  active?: boolean;
+}
+
+export interface SearchProductsInput {
+  query: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface GetProductInput {
+  productId: number;
+}
+
+export interface CreateProductInput {
+  name: string;
+  code?: string;
+  description?: string;
+  unit?: string;
+  price?: number;
+  taxRate?: number;
+  currencyId?: number;
+  categoryId?: number;
+  ownerId?: number;
+}
+
+export interface UpdateProductInput {
+  productId: number;
+  name?: string;
+  code?: string;
+  description?: string;
+  unit?: string;
+  price?: number;
+  taxRate?: number;
+  currencyId?: number;
+  categoryId?: number;
+  active?: boolean;
+}
+
+// ============================================================================
+// MCP Tool Input Types - Company Addresses
+// ============================================================================
+
+export interface ListCompanyAddressesInput {
+  companyId: number;
+}
+
+export interface AddCompanyAddressInput {
+  companyId: number;
+  name?: string;
+  street?: string;
+  city?: string;
+  zipCode?: string;
+  country?: string;
+  email?: string;
+  phone?: string;
+  primary?: boolean;
+  contactAddress?: boolean;
+}
+
+export interface UpdateCompanyAddressInput {
+  companyId: number;
+  addressId: number;
+  name?: string;
+  street?: string;
+  city?: string;
+  zipCode?: string;
+  country?: string;
+  email?: string;
+  phone?: string;
+}
+
+export interface DeleteCompanyAddressInput {
+  companyId: number;
+  addressId: number;
+}
+
+export interface SetPrimaryCompanyAddressInput {
+  companyId: number;
+  addressId: number;
+}
+
+// ============================================================================
+// MCP Tool Input Types - Contact Relationships
+// ============================================================================
+
+export interface ListContactRelationshipsInput {
+  contactId: number;
+}
+
+export interface AddContactRelationshipInput {
+  contactId: number;
+  companyId: number;
+  relationshipType?: string;
+  primary?: boolean;
+}
+
+export interface UpdateContactRelationshipInput {
+  contactId: number;
+  relationshipId: number;
+  relationshipType?: string;
+}
+
+export interface DeleteContactRelationshipInput {
+  contactId: number;
+  relationshipId: number;
+}
+
+export interface SetPrimaryContactRelationshipInput {
+  contactId: number;
+  relationshipId: number;
+}
+
+// ============================================================================
+// MCP Tool Input Types - Offers
+// ============================================================================
+
+export interface ListOffersInput {
+  limit?: number;
+  offset?: number;
+  status?: OfferStatus;
+  companyId?: number;
+  dealId?: number;
+  ownerId?: number;
+}
+
+export interface SearchOffersInput {
+  query: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface GetOfferInput {
+  offerId: number;
+}
+
+export interface OfferItemInput {
+  productId?: number;
+  name: string;
+  code?: string;
+  description?: string;
+  unit?: string;
+  quantity: number;
+  price: number;
+  taxRate?: number;
+  discount?: number;
+}
+
+export interface CreateOfferInput {
+  name: string;
+  companyId: number;
+  dealId?: number;
+  contactId?: number;
+  ownerId?: number;
+  validFrom?: string;
+  validTill?: string;
+  description?: string;
+  tags?: string[];
+}
+
+export interface CreateOfferWithItemsInput {
+  name: string;
+  companyId: number;
+  dealId?: number;
+  contactId?: number;
+  ownerId?: number;
+  validFrom?: string;
+  validTill?: string;
+  description?: string;
+  items: OfferItemInput[];
+  tags?: string[];
+}
+
+export interface UpdateOfferInput {
+  offerId: number;
+  name?: string;
+  status?: OfferStatus;
+  validFrom?: string;
+  validTill?: string;
+  description?: string;
+  tags?: string[];
+}
+
+export interface AddOfferItemInput {
+  offerId: number;
+  item: OfferItemInput;
+}
+
+export interface RemoveOfferItemInput {
+  offerId: number;
+  itemId: number;
+}
+
+// ============================================================================
+// MCP Tool Input Types - Sales Orders
+// ============================================================================
+
+export interface ListSalesOrdersInput {
+  limit?: number;
+  offset?: number;
+  status?: SalesOrderStatus;
+  companyId?: number;
+  dealId?: number;
+  offerId?: number;
+  ownerId?: number;
+}
+
+export interface SearchSalesOrdersInput {
+  query: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface GetSalesOrderInput {
+  salesOrderId: number;
+}
+
+export interface SalesOrderItemInput {
+  productId?: number;
+  name: string;
+  code?: string;
+  description?: string;
+  unit?: string;
+  quantity: number;
+  price: number;
+  taxRate?: number;
+  discount?: number;
+}
+
+export interface CreateSalesOrderInput {
+  name: string;
+  companyId: number;
+  dealId: number;
+  offerId?: number;
+  contactId?: number;
+  ownerId?: number;
+  orderDate?: string;
+  deliveryDate?: string;
+  deliveryAddressId?: number;
+  invoiceAddressId?: number;
+  description?: string;
+  tags?: string[];
+}
+
+export interface CreateSalesOrderWithItemsInput {
+  name: string;
+  companyId: number;
+  dealId: number;
+  offerId?: number;
+  contactId?: number;
+  ownerId?: number;
+  orderDate?: string;
+  deliveryDate?: string;
+  deliveryAddressId?: number;
+  invoiceAddressId?: number;
+  description?: string;
+  items: SalesOrderItemInput[];
+  tags?: string[];
+}
+
+export interface CreateSalesOrderFromOfferInput {
+  offerId: number;
+  orderDate?: string;
+  deliveryDate?: string;
+}
+
+export interface UpdateSalesOrderInput {
+  salesOrderId: number;
+  name?: string;
+  status?: SalesOrderStatus;
+  orderDate?: string;
+  deliveryDate?: string;
+  description?: string;
+  tags?: string[];
+}
+
+export interface AddSalesOrderItemInput {
+  salesOrderId: number;
+  item: SalesOrderItemInput;
+}
+
+export interface RemoveSalesOrderItemInput {
+  salesOrderId: number;
+  itemId: number;
+}
+
+// ============================================================================
+// MCP Tool Input Types - Projects
+// ============================================================================
+
+export interface ListProjectsInput {
+  limit?: number;
+  offset?: number;
+  status?: ProjectStatus;
+  companyId?: number;
+  ownerId?: number;
+}
+
+export interface SearchProjectsInput {
+  query: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface GetProjectInput {
+  projectId: number;
+}
+
+export interface CreateProjectInput {
+  name: string;
+  companyId: number;
+  dealId?: number;
+  ownerId?: number;
+  startDate?: string;
+  endDate?: string;
+  description?: string;
+  tags?: string[];
+}
+
+export interface UpdateProjectInput {
+  projectId: number;
+  name?: string;
+  status?: ProjectStatus;
+  startDate?: string;
+  endDate?: string;
+  description?: string;
+  tags?: string[];
+}
+
+export interface AddProjectParticipantInput {
+  projectId: number;
+  contactId: number;
+  note?: string;
+}
+
+export interface RemoveProjectParticipantInput {
+  projectId: number;
+  participantId: number;
 }
 
 // ============================================================================

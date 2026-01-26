@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { getContactsService } from '../api/contacts';
 import { logger } from '../utils/logger';
 import { getPolishErrorMessage } from '../utils/errors';
-import type { RaynetPerson } from '../types';
+import type { RaynetPerson, RaynetPersonRelationship } from '../types';
 
 // ============================================================================
 // Zod Schemas for Input Validation
@@ -67,6 +67,34 @@ export const LinkContactToCompanySchema = z.object({
   companyId: z.number().int().positive('ID firmy musi być liczbą dodatnią'),
   relationshipType: z.string().optional(),
   primary: z.boolean().optional(),
+});
+
+// Relationship Schemas
+export const ListContactRelationshipsSchema = z.object({
+  contactId: z.number().int().positive('ID kontaktu musi być liczbą dodatnią'),
+});
+
+export const AddContactRelationshipSchema = z.object({
+  contactId: z.number().int().positive('ID kontaktu musi być liczbą dodatnią'),
+  companyId: z.number().int().positive('ID firmy musi być liczbą dodatnią'),
+  relationshipType: z.string().optional(),
+  primary: z.boolean().optional(),
+});
+
+export const UpdateContactRelationshipSchema = z.object({
+  contactId: z.number().int().positive('ID kontaktu musi być liczbą dodatnią'),
+  relationshipId: z.number().int().positive('ID relacji musi być liczbą dodatnią'),
+  relationshipType: z.string().min(1, 'Typ relacji jest wymagany'),
+});
+
+export const DeleteContactRelationshipSchema = z.object({
+  contactId: z.number().int().positive('ID kontaktu musi być liczbą dodatnią'),
+  relationshipId: z.number().int().positive('ID relacji musi być liczbą dodatnią'),
+});
+
+export const SetPrimaryContactRelationshipSchema = z.object({
+  contactId: z.number().int().positive('ID kontaktu musi być liczbą dodatnią'),
+  relationshipId: z.number().int().positive('ID relacji musi być liczbą dodatnią'),
 });
 
 // ============================================================================
@@ -290,6 +318,110 @@ export const contactToolDefinitions = [
         },
       },
       required: ['contactId', 'companyId'],
+    },
+  },
+  // Relationship tools
+  {
+    name: 'raynet_list_contact_relationships',
+    description:
+      'Pobiera listę wszystkich relacji kontaktu z firmami.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        contactId: {
+          type: 'number',
+          description: 'ID kontaktu',
+        },
+      },
+      required: ['contactId'],
+    },
+  },
+  {
+    name: 'raynet_add_contact_relationship',
+    description:
+      'Dodaje nową relację kontaktu z firmą.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        contactId: {
+          type: 'number',
+          description: 'ID kontaktu',
+        },
+        companyId: {
+          type: 'number',
+          description: 'ID firmy',
+        },
+        relationshipType: {
+          type: 'string',
+          description: 'Typ relacji (np. Pracownik, Dyrektor)',
+        },
+        primary: {
+          type: 'boolean',
+          description: 'Czy to główna firma kontaktu',
+        },
+      },
+      required: ['contactId', 'companyId'],
+    },
+  },
+  {
+    name: 'raynet_update_contact_relationship',
+    description:
+      'Aktualizuje typ relacji kontaktu z firmą.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        contactId: {
+          type: 'number',
+          description: 'ID kontaktu',
+        },
+        relationshipId: {
+          type: 'number',
+          description: 'ID relacji do aktualizacji',
+        },
+        relationshipType: {
+          type: 'string',
+          description: 'Nowy typ relacji',
+        },
+      },
+      required: ['contactId', 'relationshipId', 'relationshipType'],
+    },
+  },
+  {
+    name: 'raynet_delete_contact_relationship',
+    description:
+      'Usuwa relację kontaktu z firmą.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        contactId: {
+          type: 'number',
+          description: 'ID kontaktu',
+        },
+        relationshipId: {
+          type: 'number',
+          description: 'ID relacji do usunięcia',
+        },
+      },
+      required: ['contactId', 'relationshipId'],
+    },
+  },
+  {
+    name: 'raynet_set_primary_contact_relationship',
+    description:
+      'Ustawia relację jako główną dla kontaktu.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        contactId: {
+          type: 'number',
+          description: 'ID kontaktu',
+        },
+        relationshipId: {
+          type: 'number',
+          description: 'ID relacji do ustawienia jako główna',
+        },
+      },
+      required: ['contactId', 'relationshipId'],
     },
   },
 ];
@@ -603,6 +735,196 @@ export async function handleLinkContactToCompany(
 }
 
 // ============================================================================
+// Relationship Tool Handlers
+// ============================================================================
+
+/**
+ * Format relationship for output
+ */
+function formatRelationship(rel: RaynetPersonRelationship): string {
+  const lines = [
+    `**${rel.company?.name ?? 'Nieznana firma'}** (ID: ${rel.id})`,
+    `- Typ: ${rel.type ?? 'N/A'}`,
+  ];
+
+  return lines.join('\n');
+}
+
+/**
+ * Handle list contact relationships tool
+ */
+export async function handleListContactRelationships(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const input = ListContactRelationshipsSchema.parse(args);
+    const service = getContactsService();
+    const result = await service.listRelationships(input);
+
+    if (result.relationships.length === 0) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: 'Kontakt nie ma żadnych relacji z firmami.',
+          },
+        ],
+      };
+    }
+
+    const relationshipsList = result.relationships.map(formatRelationship).join('\n\n---\n\n');
+    const summary = `Relacje kontaktu (${result.totalCount}):`;
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `${summary}\n\n${relationshipsList}`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleListContactRelationships', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle add contact relationship tool
+ */
+export async function handleAddContactRelationship(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const input = AddContactRelationshipSchema.parse(args);
+    const service = getContactsService();
+    const result = await service.addRelationship(input);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `✅ Relacja została dodana pomyślnie!\n\n${formatRelationship(result.relationship)}`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleAddContactRelationship', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle update contact relationship tool
+ */
+export async function handleUpdateContactRelationship(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const input = UpdateContactRelationshipSchema.parse(args);
+    const service = getContactsService();
+    const result = await service.updateRelationship(input);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `✅ Relacja została zaktualizowana pomyślnie!\n\n${formatRelationship(result.relationship)}`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleUpdateContactRelationship', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle delete contact relationship tool
+ */
+export async function handleDeleteContactRelationship(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const input = DeleteContactRelationshipSchema.parse(args);
+    const service = getContactsService();
+    await service.deleteRelationship(input);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `✅ Relacja o ID ${input.relationshipId} została usunięta.`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleDeleteContactRelationship', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle set primary contact relationship tool
+ */
+export async function handleSetPrimaryContactRelationship(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const input = SetPrimaryContactRelationshipSchema.parse(args);
+    const service = getContactsService();
+    const result = await service.setPrimaryRelationship(input);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `✅ Relacja została ustawiona jako główna!\n\n${formatRelationship(result.relationship)}`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleSetPrimaryContactRelationship', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+// ============================================================================
 // Tool Router
 // ============================================================================
 
@@ -625,6 +947,17 @@ export async function handleContactTool(
       return handleDeleteContact(args);
     case 'raynet_link_contact_to_company':
       return handleLinkContactToCompany(args);
+    // Relationship tools
+    case 'raynet_list_contact_relationships':
+      return handleListContactRelationships(args);
+    case 'raynet_add_contact_relationship':
+      return handleAddContactRelationship(args);
+    case 'raynet_update_contact_relationship':
+      return handleUpdateContactRelationship(args);
+    case 'raynet_delete_contact_relationship':
+      return handleDeleteContactRelationship(args);
+    case 'raynet_set_primary_contact_relationship':
+      return handleSetPrimaryContactRelationship(args);
     default:
       return {
         content: [

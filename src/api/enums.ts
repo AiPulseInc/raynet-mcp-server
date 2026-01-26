@@ -147,6 +147,78 @@ export class EnumsService {
   }
 
   // ==========================================================================
+  // Product Enums
+  // ==========================================================================
+
+  /**
+   * Get product categories
+   */
+  async getProductCategories(): Promise<EnumListResult> {
+    logger.info('Fetching product categories');
+    return this.fetchEnum('/productCategory/');
+  }
+
+  // ==========================================================================
+  // Offer Enums
+  // ==========================================================================
+
+  /**
+   * Get offer categories
+   */
+  async getOfferCategories(): Promise<EnumListResult> {
+    logger.info('Fetching offer categories');
+    return this.fetchEnum('/offerCategory/');
+  }
+
+  /**
+   * Get offer statuses
+   */
+  async getOfferStatuses(): Promise<EnumListResult> {
+    logger.info('Fetching offer statuses');
+    return this.fetchEnum('/offerStatus/');
+  }
+
+  // ==========================================================================
+  // Sales Order Enums
+  // ==========================================================================
+
+  /**
+   * Get sales order categories
+   */
+  async getSalesOrderCategories(): Promise<EnumListResult> {
+    logger.info('Fetching sales order categories');
+    return this.fetchEnum('/salesOrderCategory/');
+  }
+
+  /**
+   * Get sales order statuses
+   */
+  async getSalesOrderStatuses(): Promise<EnumListResult> {
+    logger.info('Fetching sales order statuses');
+    return this.fetchEnum('/salesOrderStatus/');
+  }
+
+  // ==========================================================================
+  // Project Enums
+  // ==========================================================================
+
+  /**
+   * Get project categories
+   */
+  async getProjectCategories(): Promise<EnumListResult> {
+    logger.info('Fetching project categories');
+    return this.fetchEnum('/projectCategory/');
+  }
+
+  /**
+   * Get project statuses
+   */
+  async getProjectStatuses(): Promise<EnumListResult> {
+    logger.info('Fetching project statuses');
+    return this.fetchEnum('/projectStatus/');
+  }
+
+  // ==========================================================================
   // General Enums
   // ==========================================================================
 

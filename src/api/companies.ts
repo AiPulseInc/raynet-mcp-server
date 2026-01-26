@@ -9,6 +9,7 @@ import { logger } from '../utils/logger';
 import { NotFoundError, ValidationError } from '../utils/errors';
 import type {
   RaynetCompany,
+  RaynetCompanyAddress,
   RaynetListResponse,
   RaynetResponse,
   ListCompaniesInput,
@@ -16,6 +17,11 @@ import type {
   GetCompanyInput,
   CreateCompanyInput,
   UpdateCompanyInput,
+  ListCompanyAddressesInput,
+  AddCompanyAddressInput,
+  UpdateCompanyAddressInput,
+  DeleteCompanyAddressInput,
+  SetPrimaryCompanyAddressInput,
   CompanyState,
   CompanyRole,
   Rating,
@@ -66,6 +72,17 @@ export interface CompanyListResult {
   totalCount: number;
   limit: number;
   offset: number;
+}
+
+/** Result of address operations */
+export interface AddressResult {
+  address: RaynetCompanyAddress;
+}
+
+/** Result of address list operations */
+export interface AddressListResult {
+  addresses: RaynetCompanyAddress[];
+  totalCount: number;
 }
 
 // ============================================================================
@@ -378,6 +395,203 @@ export class CompaniesService {
    */
   async getActive(limit = 20, offset = 0): Promise<CompanyListResult> {
     return this.list({ state: 'B_ACTUAL', limit, offset });
+  }
+
+  // ==========================================================================
+  // Address Operations
+  // ==========================================================================
+
+  /**
+   * List all addresses for a company
+   */
+  async listAddresses(input: ListCompanyAddressesInput): Promise<AddressListResult> {
+    const { companyId } = input;
+
+    if (!companyId || companyId <= 0) {
+      throw new ValidationError(['ID firmy musi być liczbą dodatnią']);
+    }
+
+    logger.info('Listing company addresses', { companyId });
+
+    // Get the company with full details including addresses
+    const response = await this.client.getOne<RaynetCompany>(
+      `${this.endpoint}/${companyId}/`
+    );
+
+    const addresses = response.data.addresses ?? [];
+
+    return {
+      addresses,
+      totalCount: addresses.length,
+    };
+  }
+
+  /**
+   * Add a new address to a company
+   */
+  async addAddress(input: AddCompanyAddressInput): Promise<AddressResult> {
+    const { companyId, ...addressData } = input;
+
+    if (!companyId || companyId <= 0) {
+      throw new ValidationError(['ID firmy musi być liczbą dodatnią']);
+    }
+
+    const payload = {
+      address: {
+        name: addressData.name,
+        street: addressData.street,
+        city: addressData.city,
+        zipCode: addressData.zipCode,
+        country: addressData.country ?? 'Polska',
+      },
+      contactInfo: {
+        email: addressData.email,
+        tel1: addressData.phone,
+      },
+      primary: addressData.primary ?? false,
+      contactAddress: addressData.contactAddress ?? false,
+    };
+
+    logger.info('Adding company address', { companyId });
+
+    const response = await this.client.put<RaynetCompanyAddress>(
+      `${this.endpoint}/${companyId}/address/`,
+      payload
+    );
+
+    logger.info('Company address added', { companyId, addressId: response.data.id });
+
+    return { address: response.data };
+  }
+
+  /**
+   * Update an existing company address
+   */
+  async updateAddress(input: UpdateCompanyAddressInput): Promise<AddressResult> {
+    const { companyId, addressId, ...updates } = input;
+
+    if (!companyId || companyId <= 0) {
+      throw new ValidationError(['ID firmy musi być liczbą dodatnią']);
+    }
+
+    if (!addressId || addressId <= 0) {
+      throw new ValidationError(['ID adresu musi być liczbą dodatnią']);
+    }
+
+    // Check if there are any updates
+    const hasUpdates = Object.values(updates).some((v) => v !== undefined);
+    if (!hasUpdates) {
+      throw new ValidationError(['Nie podano żadnych zmian do zapisania']);
+    }
+
+    // First, get the current address to get version
+    const addressesResult = await this.listAddresses({ companyId });
+    const currentAddress = addressesResult.addresses.find(a => a.id === addressId);
+
+    if (!currentAddress) {
+      throw new NotFoundError('adresu', addressId);
+    }
+
+    const payload: Record<string, unknown> = {};
+
+    if (updates.name !== undefined || updates.street !== undefined ||
+        updates.city !== undefined || updates.zipCode !== undefined ||
+        updates.country !== undefined) {
+      payload.address = {
+        name: updates.name ?? currentAddress.address?.name,
+        street: updates.street ?? currentAddress.address?.street,
+        city: updates.city ?? currentAddress.address?.city,
+        zipCode: updates.zipCode ?? currentAddress.address?.zipCode,
+        country: updates.country ?? currentAddress.address?.country,
+      };
+    }
+
+    if (updates.email !== undefined || updates.phone !== undefined) {
+      payload.contactInfo = {
+        email: updates.email ?? currentAddress.contactInfo?.email,
+        tel1: updates.phone ?? currentAddress.contactInfo?.tel1,
+      };
+    }
+
+    logger.info('Updating company address', { companyId, addressId });
+
+    await this.client.post<RaynetCompanyAddress>(
+      `${this.endpoint}/${companyId}/address/${addressId}/`,
+      payload
+    );
+
+    // Fetch updated address
+    const updatedAddresses = await this.listAddresses({ companyId });
+    const updatedAddress = updatedAddresses.addresses.find(a => a.id === addressId);
+
+    if (!updatedAddress) {
+      throw new NotFoundError('adresu', addressId);
+    }
+
+    logger.info('Company address updated', { companyId, addressId });
+
+    return { address: updatedAddress };
+  }
+
+  /**
+   * Delete a company address
+   */
+  async deleteAddress(input: DeleteCompanyAddressInput): Promise<void> {
+    const { companyId, addressId } = input;
+
+    if (!companyId || companyId <= 0) {
+      throw new ValidationError(['ID firmy musi być liczbą dodatnią']);
+    }
+
+    if (!addressId || addressId <= 0) {
+      throw new ValidationError(['ID adresu musi być liczbą dodatnią']);
+    }
+
+    logger.info('Deleting company address', { companyId, addressId });
+
+    try {
+      await this.client.delete(`${this.endpoint}/${companyId}/address/${addressId}/`);
+      logger.info('Company address deleted', { companyId, addressId });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new NotFoundError('adresu', addressId);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Set an address as primary
+   */
+  async setPrimaryAddress(input: SetPrimaryCompanyAddressInput): Promise<AddressResult> {
+    const { companyId, addressId } = input;
+
+    if (!companyId || companyId <= 0) {
+      throw new ValidationError(['ID firmy musi być liczbą dodatnią']);
+    }
+
+    if (!addressId || addressId <= 0) {
+      throw new ValidationError(['ID adresu musi być liczbą dodatnią']);
+    }
+
+    logger.info('Setting primary company address', { companyId, addressId });
+
+    await this.client.post<void>(
+      `${this.endpoint}/${companyId}/address/${addressId}/`,
+      { primary: true }
+    );
+
+    // Fetch updated address
+    const updatedAddresses = await this.listAddresses({ companyId });
+    const updatedAddress = updatedAddresses.addresses.find(a => a.id === addressId);
+
+    if (!updatedAddress) {
+      throw new NotFoundError('adresu', addressId);
+    }
+
+    logger.info('Primary company address set', { companyId, addressId });
+
+    return { address: updatedAddress };
   }
 }
 

@@ -9,7 +9,7 @@ import { getCompaniesService } from '../api/companies';
 import { getContactsService } from '../api/contacts';
 import { logger } from '../utils/logger';
 import { getPolishErrorMessage } from '../utils/errors';
-import type { RaynetCompany, RaynetPerson } from '../types';
+import type { RaynetCompany, RaynetCompanyAddress, RaynetPerson } from '../types';
 
 // ============================================================================
 // Utility Functions
@@ -94,6 +94,46 @@ export const UpdateCompanySchema = z.object({
 
 export const DeleteCompanySchema = z.object({
   companyId: z.number().int().positive('ID firmy musi być liczbą dodatnią'),
+});
+
+// Address Schemas
+export const ListCompanyAddressesSchema = z.object({
+  companyId: z.number().int().positive('ID firmy musi być liczbą dodatnią'),
+});
+
+export const AddCompanyAddressSchema = z.object({
+  companyId: z.number().int().positive('ID firmy musi być liczbą dodatnią'),
+  name: z.string().optional(),
+  street: z.string().optional(),
+  city: z.string().optional(),
+  zipCode: z.string().optional(),
+  country: z.string().optional(),
+  email: z.string().email('Nieprawidłowy format email').optional(),
+  phone: z.string().optional(),
+  primary: z.boolean().optional(),
+  contactAddress: z.boolean().optional(),
+});
+
+export const UpdateCompanyAddressSchema = z.object({
+  companyId: z.number().int().positive('ID firmy musi być liczbą dodatnią'),
+  addressId: z.number().int().positive('ID adresu musi być liczbą dodatnią'),
+  name: z.string().optional(),
+  street: z.string().optional(),
+  city: z.string().optional(),
+  zipCode: z.string().optional(),
+  country: z.string().optional(),
+  email: z.string().email('Nieprawidłowy format email').optional(),
+  phone: z.string().optional(),
+});
+
+export const DeleteCompanyAddressSchema = z.object({
+  companyId: z.number().int().positive('ID firmy musi być liczbą dodatnią'),
+  addressId: z.number().int().positive('ID adresu musi być liczbą dodatnią'),
+});
+
+export const SetPrimaryCompanyAddressSchema = z.object({
+  companyId: z.number().int().positive('ID firmy musi być liczbą dodatnią'),
+  addressId: z.number().int().positive('ID adresu musi być liczbą dodatnią'),
 });
 
 // ============================================================================
@@ -324,6 +364,158 @@ export const companyToolDefinitions = [
         },
       },
       required: ['companyId'],
+    },
+  },
+  // Address tools
+  {
+    name: 'raynet_list_company_addresses',
+    description:
+      'Pobiera listę wszystkich adresów firmy. Zwraca adresy główne i kontaktowe.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        companyId: {
+          type: 'number',
+          description: 'ID firmy',
+        },
+      },
+      required: ['companyId'],
+    },
+  },
+  {
+    name: 'raynet_add_company_address',
+    description:
+      'Dodaje nowy adres do firmy. Można oznaczyć jako główny lub kontaktowy.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        companyId: {
+          type: 'number',
+          description: 'ID firmy',
+        },
+        name: {
+          type: 'string',
+          description: 'Nazwa adresu (np. "Siedziba główna")',
+        },
+        street: {
+          type: 'string',
+          description: 'Ulica i numer',
+        },
+        city: {
+          type: 'string',
+          description: 'Miasto',
+        },
+        zipCode: {
+          type: 'string',
+          description: 'Kod pocztowy',
+        },
+        country: {
+          type: 'string',
+          description: 'Kraj (domyślnie Polska)',
+        },
+        email: {
+          type: 'string',
+          description: 'Email kontaktowy',
+        },
+        phone: {
+          type: 'string',
+          description: 'Telefon kontaktowy',
+        },
+        primary: {
+          type: 'boolean',
+          description: 'Czy to adres główny',
+        },
+        contactAddress: {
+          type: 'boolean',
+          description: 'Czy to adres kontaktowy',
+        },
+      },
+      required: ['companyId'],
+    },
+  },
+  {
+    name: 'raynet_update_company_address',
+    description:
+      'Aktualizuje istniejący adres firmy. Podaj tylko pola do zmiany.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        companyId: {
+          type: 'number',
+          description: 'ID firmy',
+        },
+        addressId: {
+          type: 'number',
+          description: 'ID adresu do aktualizacji',
+        },
+        name: {
+          type: 'string',
+          description: 'Nazwa adresu',
+        },
+        street: {
+          type: 'string',
+          description: 'Ulica i numer',
+        },
+        city: {
+          type: 'string',
+          description: 'Miasto',
+        },
+        zipCode: {
+          type: 'string',
+          description: 'Kod pocztowy',
+        },
+        country: {
+          type: 'string',
+          description: 'Kraj',
+        },
+        email: {
+          type: 'string',
+          description: 'Email kontaktowy',
+        },
+        phone: {
+          type: 'string',
+          description: 'Telefon kontaktowy',
+        },
+      },
+      required: ['companyId', 'addressId'],
+    },
+  },
+  {
+    name: 'raynet_delete_company_address',
+    description:
+      'Usuwa adres firmy. Nie można usunąć adresu głównego.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        companyId: {
+          type: 'number',
+          description: 'ID firmy',
+        },
+        addressId: {
+          type: 'number',
+          description: 'ID adresu do usunięcia',
+        },
+      },
+      required: ['companyId', 'addressId'],
+    },
+  },
+  {
+    name: 'raynet_set_primary_company_address',
+    description:
+      'Ustawia adres jako główny dla firmy.',
+    inputSchema: {
+      type: 'object' as const,
+      properties: {
+        companyId: {
+          type: 'number',
+          description: 'ID firmy',
+        },
+        addressId: {
+          type: 'number',
+          description: 'ID adresu do ustawienia jako główny',
+        },
+      },
+      required: ['companyId', 'addressId'],
     },
   },
 ];
@@ -663,6 +855,221 @@ export async function handleDeleteCompany(
 }
 
 // ============================================================================
+// Address Tool Handlers
+// ============================================================================
+
+/**
+ * Format address for output
+ */
+function formatAddress(address: RaynetCompanyAddress): string {
+  const lines = [];
+
+  const name = address.address?.name ?? 'Adres';
+  const flags = [];
+  if (address.primary) flags.push('Główny');
+  if (address.contactAddress) flags.push('Kontaktowy');
+
+  lines.push(`**${name}** (ID: ${address.id})${flags.length > 0 ? ` [${flags.join(', ')}]` : ''}`);
+
+  const addr = address.address;
+  if (addr?.street || addr?.city) {
+    const parts = [];
+    if (addr.street) parts.push(addr.street);
+    if (addr.zipCode || addr.city) {
+      parts.push(`${addr.zipCode ?? ''} ${addr.city ?? ''}`.trim());
+    }
+    if (addr.country && addr.country !== 'Polska') parts.push(addr.country);
+    lines.push(`- Adres: ${parts.join(', ')}`);
+  }
+
+  if (address.contactInfo?.email) {
+    lines.push(`- Email: ${address.contactInfo.email}`);
+  }
+
+  if (address.contactInfo?.tel1) {
+    lines.push(`- Tel: ${address.contactInfo.tel1}`);
+  }
+
+  return lines.join('\n');
+}
+
+/**
+ * Handle list company addresses tool
+ */
+export async function handleListCompanyAddresses(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const input = ListCompanyAddressesSchema.parse(args);
+    const service = getCompaniesService();
+    const result = await service.listAddresses(input);
+
+    if (result.addresses.length === 0) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: 'Firma nie ma żadnych dodatkowych adresów.',
+          },
+        ],
+      };
+    }
+
+    const addressesList = result.addresses.map(formatAddress).join('\n\n---\n\n');
+    const summary = `Adresy firmy (${result.totalCount}):`;
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `${summary}\n\n${addressesList}`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleListCompanyAddresses', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle add company address tool
+ */
+export async function handleAddCompanyAddress(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const parsed = AddCompanyAddressSchema.parse(args);
+    const input = removeUndefined(parsed);
+    const service = getCompaniesService();
+    const result = await service.addAddress(input);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `✅ Adres został dodany pomyślnie!\n\n${formatAddress(result.address)}`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleAddCompanyAddress', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle update company address tool
+ */
+export async function handleUpdateCompanyAddress(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const parsed = UpdateCompanyAddressSchema.parse(args);
+    const input = removeUndefined(parsed);
+    const service = getCompaniesService();
+    const result = await service.updateAddress(input);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `✅ Adres został zaktualizowany pomyślnie!\n\n${formatAddress(result.address)}`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleUpdateCompanyAddress', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle delete company address tool
+ */
+export async function handleDeleteCompanyAddress(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const input = DeleteCompanyAddressSchema.parse(args);
+    const service = getCompaniesService();
+    await service.deleteAddress(input);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `✅ Adres o ID ${input.addressId} został usunięty.`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleDeleteCompanyAddress', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+/**
+ * Handle set primary company address tool
+ */
+export async function handleSetPrimaryCompanyAddress(
+  args: unknown
+): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  try {
+    const input = SetPrimaryCompanyAddressSchema.parse(args);
+    const service = getCompaniesService();
+    const result = await service.setPrimaryAddress(input);
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `✅ Adres został ustawiony jako główny!\n\n${formatAddress(result.address)}`,
+        },
+      ],
+    };
+  } catch (error) {
+    logger.error('Error in handleSetPrimaryCompanyAddress', { error });
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Błąd: ${getPolishErrorMessage(error)}`,
+        },
+      ],
+    };
+  }
+}
+
+// ============================================================================
 // Tool Router
 // ============================================================================
 
@@ -683,6 +1090,17 @@ export async function handleCompanyTool(
       return handleUpdateCompany(args);
     case 'raynet_delete_company':
       return handleDeleteCompany(args);
+    // Address tools
+    case 'raynet_list_company_addresses':
+      return handleListCompanyAddresses(args);
+    case 'raynet_add_company_address':
+      return handleAddCompanyAddress(args);
+    case 'raynet_update_company_address':
+      return handleUpdateCompanyAddress(args);
+    case 'raynet_delete_company_address':
+      return handleDeleteCompanyAddress(args);
+    case 'raynet_set_primary_company_address':
+      return handleSetPrimaryCompanyAddress(args);
     default:
       return {
         content: [
