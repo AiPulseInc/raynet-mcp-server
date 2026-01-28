@@ -55,9 +55,9 @@ EXPOSE 3000
 # Switch to non-root user
 USER nodejs
 
-# Health check (will be implemented in Sprint 1)
-# HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-#     CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
-# Start the server
-CMD ["node", "dist/index.js"]
+# Start the HTTP server (for Railway/remote deployment)
+CMD ["node", "dist/server-http.js"]
