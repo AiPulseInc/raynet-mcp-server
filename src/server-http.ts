@@ -5,6 +5,11 @@
  * Uses StreamableHTTPServerTransport for HTTP/SSE communication
  */
 
+// Early startup logging for debugging
+console.log('[STARTUP] Raynet MCP HTTP Server starting...');
+console.log('[STARTUP] PORT env:', process.env.PORT);
+console.log('[STARTUP] NODE_ENV env:', process.env.NODE_ENV);
+
 import express, { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -236,6 +241,12 @@ async function startHTTPServer(): Promise<void> {
 // ============================================================================
 
 startHTTPServer().catch((error) => {
-  logger.error('Fatal error starting HTTP server', { error });
+  // Use console.error for fatal errors as logger might not be initialized
+  console.error('Fatal error starting HTTP server:', error);
+  try {
+    logger.error('Fatal error starting HTTP server', { error });
+  } catch {
+    // Logger not available, already logged to console
+  }
   process.exit(1);
 });

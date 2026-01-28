@@ -47,17 +47,15 @@ COPY --from=builder --chown=nodejs:nodejs /app/package.json ./
 
 # Set environment
 ENV NODE_ENV=production
-ENV PORT=3000
-
-# Expose port
-EXPOSE 3000
+# PORT is set by Railway at runtime
 
 # Switch to non-root user
 USER nodejs
 
-# Health check
+# Health check - Railway uses its own healthcheck, this is fallback
+# Uses PORT env var that Railway sets
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/health || exit 1
 
 # Start the HTTP server (for Railway/remote deployment)
 CMD ["node", "dist/server-http.js"]
