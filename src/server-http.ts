@@ -121,7 +121,13 @@ const transports = new Map<string, StreamableHTTPServerTransport>();
 
 // MCP endpoint - handles both POST (messages) and GET (SSE stream)
 app.all('/mcp', async (req: Request, res: Response) => {
-  logger.info('MCP request received', { method: req.method, sessionId: req.headers['mcp-session-id'] });
+  // n8n HTTP Streamable compatibility: ensure Accept header includes text/event-stream
+  // The MCP SDK requires this header, but n8n's HTTP Streamable transport may not send it
+  if (!req.headers.accept || !req.headers.accept.includes('text/event-stream')) {
+    req.headers.accept = 'application/json, text/event-stream';
+  }
+
+  logger.info('MCP request received', { method: req.method, sessionId: req.headers['mcp-session-id'], accept: req.headers.accept });
 
   try {
     // Check for existing session
