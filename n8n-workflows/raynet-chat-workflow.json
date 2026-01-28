@@ -1,0 +1,515 @@
+{
+  "name": "Raynet CRM Chat Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "chat-trigger",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0],
+      "webhookId": "raynet-chat"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a helpful CRM assistant that helps users interact with Raynet CRM. You can search for companies, contacts, deals, leads, and activities. You can also create, update, and manage CRM records.\n\nWhen the user asks about CRM data, use the appropriate MCP tool to fetch or modify the data. Always summarize the results in a clear, readable format.\n\nAvailable capabilities:\n- List and search companies, contacts, deals, leads\n- Create new records (companies, contacts, deals, leads, activities)\n- Update existing records\n- Manage activities and tasks\n- View statistics and reports\n\nRespond in the same language as the user (Polish or English)."
+        }
+      },
+      "id": "ai-agent",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "maxTokensToSample": 4096
+        }
+      },
+      "id": "claude-model",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [220, 200],
+      "credentials": {
+        "anthropicApi": {
+          "id": "REPLACE_WITH_YOUR_ANTHROPIC_CREDENTIAL_ID",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "raynet_list_companies",
+        "description": "List companies from Raynet CRM. Returns company names, IDs, and basic info. Use limit parameter to control results count.",
+        "method": "POST",
+        "url": "https://raynet-mcp-server-production.up.railway.app/mcp",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json, text/event-stream\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"raynet_list_companies\",\n    \"arguments\": {\n      \"limit\": {{ $fromAI('limit', 10, 'number') }}\n    }\n  },\n  \"id\": {{ Math.floor(Math.random() * 10000) }}\n}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "limit",
+              "description": "Maximum number of companies to return (default 10, max 100)",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "tool-list-companies",
+      "name": "List Companies",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [440, 200]
+    },
+    {
+      "parameters": {
+        "name": "raynet_search_companies",
+        "description": "Search for companies in Raynet CRM by name, registration number, or tax ID. Use query parameter with search text.",
+        "method": "POST",
+        "url": "https://raynet-mcp-server-production.up.railway.app/mcp",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json, text/event-stream\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"raynet_search_companies\",\n    \"arguments\": {\n      \"query\": \"{{ $fromAI('query', '', 'string') }}\",\n      \"limit\": {{ $fromAI('limit', 10, 'number') }}\n    }\n  },\n  \"id\": {{ Math.floor(Math.random() * 10000) }}\n}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "query",
+              "description": "Search text - company name, registration number, or tax ID",
+              "type": "string"
+            },
+            {
+              "name": "limit",
+              "description": "Maximum results to return",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "tool-search-companies",
+      "name": "Search Companies",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [440, 340]
+    },
+    {
+      "parameters": {
+        "name": "raynet_list_contacts",
+        "description": "List contacts (people) from Raynet CRM. Returns names, emails, phones, and linked companies.",
+        "method": "POST",
+        "url": "https://raynet-mcp-server-production.up.railway.app/mcp",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json, text/event-stream\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"raynet_list_contacts\",\n    \"arguments\": {\n      \"limit\": {{ $fromAI('limit', 10, 'number') }}\n    }\n  },\n  \"id\": {{ Math.floor(Math.random() * 10000) }}\n}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "limit",
+              "description": "Maximum number of contacts to return",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "tool-list-contacts",
+      "name": "List Contacts",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [600, 200]
+    },
+    {
+      "parameters": {
+        "name": "raynet_search_contacts",
+        "description": "Search for contacts in Raynet CRM by name, email, or phone number.",
+        "method": "POST",
+        "url": "https://raynet-mcp-server-production.up.railway.app/mcp",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json, text/event-stream\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"raynet_search_contacts\",\n    \"arguments\": {\n      \"query\": \"{{ $fromAI('query', '', 'string') }}\",\n      \"limit\": {{ $fromAI('limit', 10, 'number') }}\n    }\n  },\n  \"id\": {{ Math.floor(Math.random() * 10000) }}\n}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "query",
+              "description": "Search text - contact name, email, or phone",
+              "type": "string"
+            },
+            {
+              "name": "limit",
+              "description": "Maximum results to return",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "tool-search-contacts",
+      "name": "Search Contacts",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [600, 340]
+    },
+    {
+      "parameters": {
+        "name": "raynet_list_deals",
+        "description": "List deals (business opportunities) from Raynet CRM. Returns deal names, values, stages, and linked companies.",
+        "method": "POST",
+        "url": "https://raynet-mcp-server-production.up.railway.app/mcp",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json, text/event-stream\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"raynet_list_deals\",\n    \"arguments\": {\n      \"limit\": {{ $fromAI('limit', 10, 'number') }}\n    }\n  },\n  \"id\": {{ Math.floor(Math.random() * 10000) }}\n}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "limit",
+              "description": "Maximum number of deals to return",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "tool-list-deals",
+      "name": "List Deals",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [760, 200]
+    },
+    {
+      "parameters": {
+        "name": "raynet_list_leads",
+        "description": "List leads from Raynet CRM. Returns lead topics, company names, and statuses.",
+        "method": "POST",
+        "url": "https://raynet-mcp-server-production.up.railway.app/mcp",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json, text/event-stream\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"raynet_list_leads\",\n    \"arguments\": {\n      \"limit\": {{ $fromAI('limit', 10, 'number') }}\n    }\n  },\n  \"id\": {{ Math.floor(Math.random() * 10000) }}\n}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "limit",
+              "description": "Maximum number of leads to return",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "tool-list-leads",
+      "name": "List Leads",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [760, 340]
+    },
+    {
+      "parameters": {
+        "name": "raynet_get_today_activities",
+        "description": "Get all activities scheduled for today from Raynet CRM. Includes meetings, calls, tasks, and emails.",
+        "method": "POST",
+        "url": "https://raynet-mcp-server-production.up.railway.app/mcp",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json, text/event-stream\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"raynet_get_today_activities\",\n    \"arguments\": {}\n  },\n  \"id\": {{ Math.floor(Math.random() * 10000) }}\n}"
+      },
+      "id": "tool-today-activities",
+      "name": "Today Activities",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [920, 200]
+    },
+    {
+      "parameters": {
+        "name": "raynet_create_lead",
+        "description": "Create a new lead in Raynet CRM. Requires topic (subject), optional: companyName, contactEmail, contactPhone, description.",
+        "method": "POST",
+        "url": "https://raynet-mcp-server-production.up.railway.app/mcp",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json, text/event-stream\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"raynet_create_lead\",\n    \"arguments\": {\n      \"topic\": \"{{ $fromAI('topic', '', 'string') }}\",\n      \"companyName\": \"{{ $fromAI('companyName', '', 'string') }}\",\n      \"contactEmail\": \"{{ $fromAI('contactEmail', '', 'string') }}\",\n      \"description\": \"{{ $fromAI('description', '', 'string') }}\"\n    }\n  },\n  \"id\": {{ Math.floor(Math.random() * 10000) }}\n}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "topic",
+              "description": "Lead subject/topic - what is the lead about",
+              "type": "string"
+            },
+            {
+              "name": "companyName",
+              "description": "Company name for the lead",
+              "type": "string"
+            },
+            {
+              "name": "contactEmail",
+              "description": "Contact email address",
+              "type": "string"
+            },
+            {
+              "name": "description",
+              "description": "Additional notes or description",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "tool-create-lead",
+      "name": "Create Lead",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [920, 340]
+    },
+    {
+      "parameters": {
+        "name": "raynet_create_activity",
+        "description": "Create a new activity (task, meeting, call, email) in Raynet CRM. Requires title, activityType (TASK/MEETING/PHONE_CALL/EMAIL), and scheduledFrom (date-time).",
+        "method": "POST",
+        "url": "https://raynet-mcp-server-production.up.railway.app/mcp",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json, text/event-stream\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"raynet_create_activity\",\n    \"arguments\": {\n      \"title\": \"{{ $fromAI('title', '', 'string') }}\",\n      \"activityType\": \"{{ $fromAI('activityType', 'TASK', 'string') }}\",\n      \"scheduledFrom\": \"{{ $fromAI('scheduledFrom', '', 'string') }}\",\n      \"description\": \"{{ $fromAI('description', '', 'string') }}\"\n    }\n  },\n  \"id\": {{ Math.floor(Math.random() * 10000) }}\n}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "title",
+              "description": "Activity title",
+              "type": "string"
+            },
+            {
+              "name": "activityType",
+              "description": "Type: TASK, MEETING, PHONE_CALL, or EMAIL",
+              "type": "string"
+            },
+            {
+              "name": "scheduledFrom",
+              "description": "Scheduled date-time in format YYYY-MM-DD HH:mm",
+              "type": "string"
+            },
+            {
+              "name": "description",
+              "description": "Activity description/notes",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "tool-create-activity",
+      "name": "Create Activity",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [1080, 200]
+    },
+    {
+      "parameters": {
+        "name": "raynet_get_company",
+        "description": "Get detailed information about a specific company by its ID. Returns full company data including addresses, contacts, and custom fields.",
+        "method": "POST",
+        "url": "https://raynet-mcp-server-production.up.railway.app/mcp",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Accept\": \"application/json, text/event-stream\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"tools/call\",\n  \"params\": {\n    \"name\": \"raynet_get_company\",\n    \"arguments\": {\n      \"companyId\": {{ $fromAI('companyId', 0, 'number') }}\n    }\n  },\n  \"id\": {{ Math.floor(Math.random() * 10000) }}\n}",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "companyId",
+              "description": "The numeric ID of the company to retrieve",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "tool-get-company",
+      "name": "Get Company",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [1080, 340]
+    }
+  ],
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Companies": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Companies": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Contacts": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Contacts": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Deals": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Leads": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Today Activities": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Lead": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Activity": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Company": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "CRM",
+      "createdAt": "2026-01-28T00:00:00.000Z",
+      "updatedAt": "2026-01-28T00:00:00.000Z"
+    },
+    {
+      "name": "Raynet",
+      "createdAt": "2026-01-28T00:00:00.000Z",
+      "updatedAt": "2026-01-28T00:00:00.000Z"
+    },
+    {
+      "name": "Chat",
+      "createdAt": "2026-01-28T00:00:00.000Z",
+      "updatedAt": "2026-01-28T00:00:00.000Z"
+    }
+  ],
+  "triggerCount": 1,
+  "pinData": {}
+}
