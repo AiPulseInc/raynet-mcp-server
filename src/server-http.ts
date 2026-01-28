@@ -3,6 +3,7 @@
  *
  * HTTP-based MCP server for remote deployment (Railway, n8n integration)
  * Uses simple HTTP JSON-RPC for maximum compatibility with n8n HTTP Streamable
+ * Includes Bearer token authentication for security
  */
 
 // Early startup logging for debugging
@@ -10,12 +11,79 @@ console.log('[STARTUP] Raynet MCP HTTP Server starting...');
 console.log('[STARTUP] PORT env:', process.env.PORT);
 console.log('[STARTUP] NODE_ENV env:', process.env.NODE_ENV);
 
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
 import { loadConfig, validateConfig } from './config/env';
 import { logger } from './utils/logger';
 import { allToolDefinitions, handleTool } from './tools';
 import { getRaynetClient } from './api/client';
+
+// ============================================================================
+// Authentication
+// ============================================================================
+
+const MCP_API_KEY = process.env.MCP_API_KEY || '';
+
+/**
+ * Bearer token authentication middleware
+ */
+function authenticateBearer(req: Request, res: Response, next: NextFunction): void {
+  // Skip auth if no API key is configured (development mode)
+  if (!MCP_API_KEY) {
+    logger.warn('MCP_API_KEY not set - authentication disabled');
+    next();
+    return;
+  }
+
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    logger.warn('Unauthorized request - no Authorization header', { ip: req.ip });
+    res.status(401).json({
+      jsonrpc: '2.0',
+      id: null,
+      error: {
+        code: -32001,
+        message: 'Unauthorized: Missing Authorization header',
+      },
+    });
+    return;
+  }
+
+  // Parse Bearer token
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || !parts[0] || parts[0].toLowerCase() !== 'bearer') {
+    logger.warn('Unauthorized request - invalid Authorization format', { ip: req.ip });
+    res.status(401).json({
+      jsonrpc: '2.0',
+      id: null,
+      error: {
+        code: -32001,
+        message: 'Unauthorized: Invalid Authorization format. Use: Bearer <token>',
+      },
+    });
+    return;
+  }
+
+  const token = parts[1];
+
+  // Validate token
+  if (token !== MCP_API_KEY) {
+    logger.warn('Unauthorized request - invalid token', { ip: req.ip });
+    res.status(401).json({
+      jsonrpc: '2.0',
+      id: null,
+      error: {
+        code: -32001,
+        message: 'Unauthorized: Invalid API key',
+      },
+    });
+    return;
+  }
+
+  // Token is valid
+  next();
+}
 
 // ============================================================================
 // Types
@@ -205,15 +273,16 @@ app.get('/', (req: Request, res: Response) => {
     version: '1.0.0',
     description: 'MCP server for Raynet CRM integration',
     tools: allToolDefinitions.length,
+    authentication: MCP_API_KEY ? 'Bearer token required' : 'disabled',
     endpoints: {
-      health: '/health',
-      mcp: '/mcp (POST for JSON-RPC messages)',
+      health: '/health (public)',
+      mcp: '/mcp (POST, requires Bearer auth)',
     },
   });
 });
 
-// MCP endpoint - handles JSON-RPC over HTTP
-app.post('/mcp', async (req: Request, res: Response) => {
+// MCP endpoint - handles JSON-RPC over HTTP (requires authentication)
+app.post('/mcp', authenticateBearer, async (req: Request, res: Response) => {
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
 
   logger.info('MCP request received', {
@@ -284,8 +353,8 @@ app.post('/mcp', async (req: Request, res: Response) => {
   }
 });
 
-// Handle DELETE for session cleanup (MCP spec)
-app.delete('/mcp', (req: Request, res: Response) => {
+// Handle DELETE for session cleanup (MCP spec) (requires authentication)
+app.delete('/mcp', authenticateBearer, (req: Request, res: Response) => {
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
 
   if (sessionId && sessions.has(sessionId)) {
@@ -330,8 +399,10 @@ async function startHTTPServer(): Promise<void> {
   }
 
   // Start HTTP server
+  const authStatus = MCP_API_KEY ? 'Enabled (Bearer token)' : 'DISABLED (set MCP_API_KEY)';
+
   app.listen(port, () => {
-    logger.info(`Raynet MCP HTTP Server started on port ${port}`);
+    logger.info(`Raynet MCP HTTP Server started on port ${port}`, { auth: !!MCP_API_KEY });
     console.log(`
 ╔════════════════════════════════════════════════════════════════╗
 ║           Raynet MCP Server - HTTP Transport                   ║
@@ -339,10 +410,11 @@ async function startHTTPServer(): Promise<void> {
 ║  Status:    Running                                            ║
 ║  Port:      ${String(port).padEnd(50)}║
 ║  Tools:     ${String(allToolDefinitions.length).padEnd(50)}║
+║  Auth:      ${authStatus.padEnd(50)}║
 ║  Endpoints:                                                    ║
-║    GET  /         - Server info                                ║
-║    GET  /health   - Health check                               ║
-║    POST /mcp      - MCP JSON-RPC messages                      ║
+║    GET  /         - Server info (public)                       ║
+║    GET  /health   - Health check (public)                      ║
+║    POST /mcp      - MCP JSON-RPC (auth required)               ║
 ╚════════════════════════════════════════════════════════════════╝
     `);
   });
