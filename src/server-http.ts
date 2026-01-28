@@ -2,7 +2,7 @@
  * Raynet MCP Server - HTTP Transport
  *
  * HTTP-based MCP server for remote deployment (Railway, n8n integration)
- * Uses StreamableHTTPServerTransport for HTTP/SSE communication
+ * Uses simple HTTP JSON-RPC for maximum compatibility with n8n HTTP Streamable
  */
 
 // Early startup logging for debugging
@@ -12,61 +12,157 @@ console.log('[STARTUP] NODE_ENV env:', process.env.NODE_ENV);
 
 import express, { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
 import { loadConfig, validateConfig } from './config/env';
 import { logger } from './utils/logger';
 import { allToolDefinitions, handleTool } from './tools';
 import { getRaynetClient } from './api/client';
 
 // ============================================================================
-// Server Setup
+// Types
 // ============================================================================
 
-/**
- * Create and configure the MCP server
- */
-function createMCPServer(): Server {
-  const server = new Server(
-    {
+interface JsonRpcRequest {
+  jsonrpc: '2.0';
+  method: string;
+  id?: string | number;
+  params?: Record<string, unknown>;
+}
+
+interface JsonRpcResponse {
+  jsonrpc: '2.0';
+  id?: string | number | null;
+  result?: unknown;
+  error?: {
+    code: number;
+    message: string;
+    data?: unknown;
+  };
+}
+
+interface Session {
+  id: string;
+  createdAt: Date;
+  lastAccess: Date;
+}
+
+// ============================================================================
+// Session Management
+// ============================================================================
+
+const sessions = new Map<string, Session>();
+
+// Clean up old sessions every 5 minutes
+setInterval(() => {
+  const now = new Date();
+  const maxAge = 30 * 60 * 1000; // 30 minutes
+  for (const [id, session] of sessions.entries()) {
+    if (now.getTime() - session.lastAccess.getTime() > maxAge) {
+      sessions.delete(id);
+      logger.debug('Session expired', { sessionId: id });
+    }
+  }
+}, 5 * 60 * 1000);
+
+// ============================================================================
+// MCP Protocol Handlers
+// ============================================================================
+
+function handleInitialize(params: Record<string, unknown>): JsonRpcResponse['result'] {
+  logger.info('MCP initialize', { params });
+  return {
+    protocolVersion: '2024-11-05',
+    capabilities: {
+      tools: {},
+    },
+    serverInfo: {
       name: 'raynet-mcp-server',
       version: '1.0.0',
     },
-    {
-      capabilities: {
-        tools: {},
+  };
+}
+
+function handleInitialized(): JsonRpcResponse['result'] {
+  logger.debug('MCP initialized notification received');
+  return {};
+}
+
+function handleListTools(): JsonRpcResponse['result'] {
+  logger.debug('Listing tools', { count: allToolDefinitions.length });
+  return {
+    tools: allToolDefinitions,
+  };
+}
+
+async function handleCallTool(params: Record<string, unknown>): Promise<JsonRpcResponse['result']> {
+  const name = params.name as string;
+  const args = (params.arguments || {}) as Record<string, unknown>;
+
+  logger.info('Tool called', { tool: name, args });
+
+  try {
+    const result = await handleTool(name, args);
+    return result;
+  } catch (error) {
+    logger.error('Tool execution error', { tool: name, error });
+    const errorMessage = error instanceof Error ? error.message : 'Wystąpił nieznany błąd';
+    return {
+      content: [{ type: 'text', text: `Błąd wykonania narzędzia: ${errorMessage}` }],
+      isError: true,
+    };
+  }
+}
+
+async function handleJsonRpcRequest(request: JsonRpcRequest): Promise<JsonRpcResponse> {
+  const { method, params, id } = request;
+
+  try {
+    let result: unknown;
+
+    switch (method) {
+      case 'initialize':
+        result = handleInitialize(params || {});
+        break;
+      case 'notifications/initialized':
+      case 'initialized':
+        result = handleInitialized();
+        break;
+      case 'tools/list':
+        result = handleListTools();
+        break;
+      case 'tools/call':
+        result = await handleCallTool(params || {});
+        break;
+      case 'ping':
+        result = {};
+        break;
+      default:
+        logger.warn('Unknown method', { method });
+        return {
+          jsonrpc: '2.0',
+          id: id ?? null,
+          error: {
+            code: -32601,
+            message: `Method not found: ${method}`,
+          },
+        };
+    }
+
+    return {
+      jsonrpc: '2.0',
+      id: id ?? null,
+      result,
+    };
+  } catch (error) {
+    logger.error('JSON-RPC handler error', { method, error });
+    return {
+      jsonrpc: '2.0',
+      id: id ?? null,
+      error: {
+        code: -32603,
+        message: error instanceof Error ? error.message : 'Internal error',
       },
-    }
-  );
-
-  // List Tools Handler
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
-    logger.debug('Listing available tools', { count: allToolDefinitions.length });
-    return { tools: allToolDefinitions };
-  });
-
-  // Call Tool Handler
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
-    logger.info('Tool called', { tool: name, args });
-
-    try {
-      return await handleTool(name, args);
-    } catch (error) {
-      logger.error('Tool execution error', { tool: name, error });
-      const errorMessage = error instanceof Error ? error.message : 'Wystąpił nieznany błąd';
-      return {
-        content: [{ type: 'text', text: `Błąd wykonania narzędzia: ${errorMessage}` }],
-        isError: true,
-      };
-    }
-  });
-
-  return server;
+    };
+  }
 }
 
 // ============================================================================
@@ -75,33 +171,14 @@ function createMCPServer(): Server {
 
 const app = express();
 
-// n8n HTTP Streamable compatibility: ensure Accept header includes text/event-stream
-// This must be the FIRST middleware to modify headers before any processing
-// The MCP SDK requires this header, but n8n's HTTP Streamable transport may not send it
-app.use('/mcp', (req, res, next) => {
-  const currentAccept = req.headers.accept || '';
-  if (!currentAccept.includes('text/event-stream')) {
-    // Modify the raw headers object
-    req.headers.accept = 'application/json, text/event-stream';
-    // Also set via rawHeaders for libraries that read from there
-    const acceptIndex = req.rawHeaders.findIndex(h => h.toLowerCase() === 'accept');
-    if (acceptIndex >= 0) {
-      req.rawHeaders[acceptIndex + 1] = 'application/json, text/event-stream';
-    } else {
-      req.rawHeaders.push('Accept', 'application/json, text/event-stream');
-    }
-  }
-  next();
-});
-
-// Middleware
+// Middleware - parse JSON
 app.use(express.json());
 
 // CORS for n8n and other external clients
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id, Accept');
   res.header('Access-Control-Expose-Headers', 'Mcp-Session-Id');
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
@@ -130,65 +207,93 @@ app.get('/', (req: Request, res: Response) => {
     tools: allToolDefinitions.length,
     endpoints: {
       health: '/health',
-      mcp: '/mcp (POST for messages, GET for SSE stream)',
+      mcp: '/mcp (POST for JSON-RPC messages)',
     },
   });
 });
 
-// Store transports by session ID for stateful mode
-const transports = new Map<string, StreamableHTTPServerTransport>();
+// MCP endpoint - handles JSON-RPC over HTTP
+app.post('/mcp', async (req: Request, res: Response) => {
+  const sessionId = req.headers['mcp-session-id'] as string | undefined;
 
-// MCP endpoint - handles both POST (messages) and GET (SSE stream)
-app.all('/mcp', async (req: Request, res: Response) => {
-  logger.info('MCP request received', { method: req.method, sessionId: req.headers['mcp-session-id'], accept: req.headers.accept });
+  logger.info('MCP request received', {
+    method: req.method,
+    sessionId,
+    body: req.body,
+  });
 
   try {
-    // Check for existing session
-    const sessionId = req.headers['mcp-session-id'] as string | undefined;
-    let transport: StreamableHTTPServerTransport;
+    const body = req.body;
 
-    if (sessionId && transports.has(sessionId)) {
-      // Reuse existing transport for this session
-      transport = transports.get(sessionId)!;
-    } else if (req.method === 'POST' && !sessionId) {
-      // New session - create transport and server
-      transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-      });
+    // Handle batch requests
+    if (Array.isArray(body)) {
+      const responses = await Promise.all(
+        body.map((request: JsonRpcRequest) => handleJsonRpcRequest(request))
+      );
 
-      const server = createMCPServer();
-      await server.connect(transport);
-
-      // Store transport by session ID after connection
-      if (transport.sessionId) {
-        transports.set(transport.sessionId, transport);
-        logger.info('New MCP session created', { sessionId: transport.sessionId });
-
-        // Clean up on close
-        transport.onclose = () => {
-          if (transport.sessionId) {
-            transports.delete(transport.sessionId);
-            logger.info('MCP session closed', { sessionId: transport.sessionId });
-          }
-        };
+      // Generate session ID if this is an initialize request
+      const hasInitialize = body.some((r: JsonRpcRequest) => r.method === 'initialize');
+      if (hasInitialize && !sessionId) {
+        const newSessionId = randomUUID();
+        sessions.set(newSessionId, {
+          id: newSessionId,
+          createdAt: new Date(),
+          lastAccess: new Date(),
+        });
+        res.header('Mcp-Session-Id', newSessionId);
+        logger.info('New session created', { sessionId: newSessionId });
       }
-    } else if (req.method === 'GET' && !sessionId) {
-      // GET without session - reject
-      res.status(400).json({ error: 'Missing Mcp-Session-Id header for GET request' });
-      return;
-    } else {
-      // Session ID provided but not found
-      res.status(404).json({ error: 'Session not found' });
+
+      res.json(responses);
       return;
     }
 
-    // Handle the request
-    await transport.handleRequest(req, res, req.body);
+    // Handle single request
+    const request = body as JsonRpcRequest;
+    const response = await handleJsonRpcRequest(request);
+
+    // Generate session ID for initialize
+    if (request.method === 'initialize' && !sessionId) {
+      const newSessionId = randomUUID();
+      sessions.set(newSessionId, {
+        id: newSessionId,
+        createdAt: new Date(),
+        lastAccess: new Date(),
+      });
+      res.header('Mcp-Session-Id', newSessionId);
+      logger.info('New session created', { sessionId: newSessionId });
+    }
+
+    // Update session access time
+    if (sessionId && sessions.has(sessionId)) {
+      const session = sessions.get(sessionId)!;
+      session.lastAccess = new Date();
+    }
+
+    res.json(response);
   } catch (error) {
     logger.error('MCP request error', { error });
-    if (!res.headersSent) {
-      res.status(500).json({ error: 'Internal server error' });
-    }
+    res.status(500).json({
+      jsonrpc: '2.0',
+      id: null,
+      error: {
+        code: -32603,
+        message: 'Internal server error',
+      },
+    });
+  }
+});
+
+// Handle DELETE for session cleanup (MCP spec)
+app.delete('/mcp', (req: Request, res: Response) => {
+  const sessionId = req.headers['mcp-session-id'] as string | undefined;
+
+  if (sessionId && sessions.has(sessionId)) {
+    sessions.delete(sessionId);
+    logger.info('Session deleted', { sessionId });
+    res.sendStatus(204);
+  } else {
+    res.status(404).json({ error: 'Session not found' });
   }
 });
 
@@ -237,8 +342,7 @@ async function startHTTPServer(): Promise<void> {
 ║  Endpoints:                                                    ║
 ║    GET  /         - Server info                                ║
 ║    GET  /health   - Health check                               ║
-║    POST /mcp      - MCP messages                               ║
-║    GET  /mcp      - MCP SSE stream (requires session)          ║
+║    POST /mcp      - MCP JSON-RPC messages                      ║
 ╚════════════════════════════════════════════════════════════════╝
     `);
   });
