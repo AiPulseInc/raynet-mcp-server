@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "n8n": {
+      "url": "https://n8n-aipulse.up.railway.app/mcp-server/http",
+      "transport": "http"
+    }
+  }
+}

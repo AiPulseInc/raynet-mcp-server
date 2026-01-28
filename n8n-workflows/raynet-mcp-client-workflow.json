@@ -1,0 +1,118 @@
+{
+  "name": "Raynet CRM Chat (MCP Client)",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "allowFileUploads": false
+        }
+      },
+      "id": "chat-trigger",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0],
+      "webhookId": "raynet-mcp-chat"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a helpful CRM assistant that helps users interact with Raynet CRM. You have access to 91 MCP tools covering:\n\n**Companies (11 tools):** Create, read, update, delete companies. Manage company addresses (add, list, update, delete, set primary).\n\n**Contacts (12 tools):** Create, read, update, delete contacts. Manage contact-company relationships (add, list, update, delete, set primary).\n\n**Deals (8 tools):** Create, read, update, delete deals. Change deal phases, calculate pipeline value.\n\n**Leads (9 tools):** Create, read, update, delete leads. Change lead phases, convert leads to deals, view statistics.\n\n**Activities (9 tools):** Create, read, update, delete activities (tasks, meetings, calls, emails). Mark complete, view today's and overdue activities.\n\n**Products (7 tools):** Create, read, update, delete products. List product categories.\n\n**Offers (9 tools):** Create, read, update, delete offers. Manage offer items (add, remove).\n\n**Sales Orders (10 tools):** Create, read, update, delete sales orders. Create from offers, manage items.\n\n**Projects (8 tools):** Create, read, update, delete projects. Manage project participants.\n\n**Enums (8 tools):** Get company categories, turnovers, deal categories, deal phases, lead phases, contact sources, currencies, all enums.\n\nWhen the user asks about CRM data, use the appropriate tool. Always summarize results clearly.\n\nRespond in the same language as the user (Polish or English).",
+          "maxIterations": 15
+        }
+      },
+      "id": "ai-agent",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "model": "claude-3-5-sonnet-20241022",
+        "options": {
+          "maxTokensToSample": 4096
+        }
+      },
+      "id": "claude-model",
+      "name": "Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.2,
+      "position": [220, 200],
+      "credentials": {
+        "anthropicApi": {
+          "id": "REPLACE_WITH_YOUR_ANTHROPIC_CREDENTIAL_ID",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sseEndpoint": "https://raynet-mcp-server-production.up.railway.app/mcp"
+      },
+      "id": "mcp-client",
+      "name": "Raynet MCP Tools",
+      "type": "@n8n/n8n-nodes-langchain.toolMcp",
+      "typeVersion": 1,
+      "position": [440, 200]
+    }
+  ],
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Raynet MCP Tools": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "CRM",
+      "createdAt": "2026-01-28T00:00:00.000Z",
+      "updatedAt": "2026-01-28T00:00:00.000Z"
+    },
+    {
+      "name": "Raynet",
+      "createdAt": "2026-01-28T00:00:00.000Z",
+      "updatedAt": "2026-01-28T00:00:00.000Z"
+    },
+    {
+      "name": "MCP",
+      "createdAt": "2026-01-28T00:00:00.000Z",
+      "updatedAt": "2026-01-28T00:00:00.000Z"
+    }
+  ],
+  "triggerCount": 1,
+  "pinData": {}
+}

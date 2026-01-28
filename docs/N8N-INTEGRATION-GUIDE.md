@@ -8,21 +8,21 @@ This guide explains how to connect the Raynet MCP Server deployed on Railway to 
 
 1. [Prerequisites](#prerequisites)
 2. [Server Information](#server-information)
-3. [Installation Methods](#installation-methods)
-   - [Method 1: MCP Community Node (Recommended)](#method-1-mcp-community-node-recommended)
-   - [Method 2: HTTP Request Node](#method-2-http-request-node)
-4. [Configuration](#configuration)
-5. [Example Workflows](#example-workflows)
-6. [Available Tools](#available-tools)
-7. [Troubleshooting](#troubleshooting)
+3. [Integration Methods](#integration-methods)
+   - [Method 1: Native MCP Client Tool (Recommended)](#method-1-native-mcp-client-tool-recommended)
+   - [Method 2: AI Agent with MCP Client](#method-2-ai-agent-with-mcp-client)
+   - [Method 3: HTTP Request Node (Legacy)](#method-3-http-request-node-legacy)
+4. [Pre-Built Workflows](#pre-built-workflows)
+5. [Available Tools (91 Total)](#available-tools-91-total)
+6. [Troubleshooting](#troubleshooting)
 
 ---
 
 ## Prerequisites
 
-- n8n instance (self-hosted or cloud)
+- n8n instance v1.70+ (v1.04+ recommended for HTTP Streamable transport)
 - Access to the deployed Raynet MCP Server
-- Basic understanding of n8n workflows
+- Anthropic API key (for AI Agent workflows)
 
 ---
 
@@ -38,85 +38,137 @@ This guide explains how to connect the Raynet MCP Server deployed on Railway to 
 
 ---
 
-## Installation Methods
+## Integration Methods
 
-### Method 1: MCP Community Node (Recommended)
+### Method 1: Native MCP Client Tool (Recommended)
 
-The easiest way to connect n8n to an MCP server is using the community MCP node.
+n8n v1.70+ includes a native **MCP Client Tool** node (`@n8n/n8n-nodes-langchain.toolMcp`) that automatically discovers all tools from an MCP server.
 
-#### Step 1: Install the MCP Node
+#### Why This Method is Best
 
-In your n8n instance:
+- **Automatic Tool Discovery**: Single node exposes ALL 91 tools
+- **Proper MCP Protocol**: Handles sessions, streaming, and protocol details
+- **No Manual Configuration**: Tools update automatically when server changes
+- **Works with AI Agent**: Direct integration with LangChain agent
 
-1. Go to **Settings** > **Community Nodes**
-2. Click **Install a community node**
-3. Search for `n8n-nodes-mcp` or `@anthropic/n8n-nodes-mcp`
-4. Click **Install**
+#### Step 1: Add MCP Client Tool Node
 
-Alternatively, install via CLI:
-```bash
-# For self-hosted n8n
-npm install n8n-nodes-mcp
-
-# Or using npx
-npx n8n-community-node-installer install n8n-nodes-mcp
-```
-
-#### Step 2: Configure MCP Credentials
-
-1. Go to **Credentials** > **Add Credential**
-2. Search for **MCP** or **Model Context Protocol**
+1. In your workflow, search for **MCP Client Tool**
+2. Add it to your canvas
 3. Configure:
-   - **Name**: `Raynet MCP Server`
-   - **Server URL**: `https://raynet-mcp-server-production.up.railway.app/mcp`
-   - **Transport**: `HTTP/SSE` (Streamable HTTP)
+   - **Connection Type**: HTTP (for v1.04+) or SSE (for older versions)
+   - **HTTP URL / SSE Endpoint**: `https://raynet-mcp-server-production.up.railway.app/mcp`
+   - **Authentication**: None (server handles Raynet credentials)
 
-#### Step 3: Use in Workflow
+#### Step 2: Connect to AI Agent
 
-1. Add an **MCP** node to your workflow
-2. Select the credential you created
-3. Choose **Operation**: `Call Tool`
-4. Select the tool from the dropdown (e.g., `raynet_list_companies`)
-5. Configure tool parameters
+1. Add an **AI Agent** node
+2. Connect MCP Client Tool to the agent's `ai_tool` input
+3. Add a language model (Claude, OpenAI, etc.)
+4. The agent can now use all 91 Raynet tools
+
+#### Workflow Structure
+
+```
+┌─────────────────┐
+│  Trigger Node   │  (Chat, Webhook, Schedule, etc.)
+└────────┬────────┘
+         │
+         v
+┌─────────────────┐     ┌──────────────────┐
+│    AI Agent     │<────│  Language Model  │
+└────────┬────────┘     └──────────────────┘
+         │
+         v
+┌─────────────────────────────────────┐
+│  MCP Client Tool                    │
+│  URL: ...mcp-server.../mcp          │
+│  Tools: 91 (auto-discovered)        │
+└─────────────────────────────────────┘
+```
 
 ---
 
-### Method 2: HTTP Request Node
+### Method 2: AI Agent with MCP Client
 
-If the MCP community node is not available, you can use the standard HTTP Request node.
+This is the same as Method 1 but includes a complete workflow setup for conversational CRM chat.
+
+#### Import Pre-Built Workflow
+
+We provide ready-to-use workflow files in `n8n-workflows/`:
+
+| n8n Version | Workflow File |
+|-------------|---------------|
+| v1.04+ | `raynet-mcp-http-streamable-workflow.json` |
+| v1.70-1.03 | `raynet-mcp-client-workflow.json` |
+| Legacy | `raynet-chat-workflow.json` |
+
+#### Manual Setup
+
+1. **Add Chat Trigger** or other trigger node
+2. **Add AI Agent** (`@n8n/n8n-nodes-langchain.agent`)
+3. **Add Language Model** (Claude recommended)
+4. **Add MCP Client Tool** configured as above
+5. **Connect nodes**:
+   - Trigger → AI Agent (main)
+   - Language Model → AI Agent (ai_languageModel)
+   - MCP Client Tool → AI Agent (ai_tool)
+
+#### AI Agent System Prompt (Recommended)
+
+```
+You are a CRM assistant with access to 91 Raynet CRM tools covering:
+- Companies (11 tools): CRUD, address management
+- Contacts (12 tools): CRUD, relationship management
+- Deals (8 tools): CRUD, phase changes, pipeline
+- Leads (9 tools): CRUD, conversion, statistics
+- Activities (9 tools): Tasks, meetings, calls, emails
+- Products (7 tools): CRUD, categories
+- Offers (9 tools): CRUD, line items
+- Sales Orders (10 tools): CRUD, conversion from offers
+- Projects (8 tools): CRUD, participants
+- Enums (8 tools): Categories, phases, statuses
+
+Use the appropriate tool based on user requests.
+Respond in the same language as the user.
+```
+
+---
+
+### Method 3: HTTP Request Node (Legacy)
+
+For older n8n versions or when MCP Client is unavailable, use HTTP Request nodes.
+
+> **Note**: This method requires manual configuration for each tool and doesn't support automatic tool discovery.
 
 #### MCP Protocol Basics
 
-MCP uses JSON-RPC 2.0 over HTTP. Each request requires:
-- `POST` method
-- Proper headers
-- JSON-RPC formatted body
+MCP uses JSON-RPC 2.0 over HTTP:
 
-#### Step 1: Create HTTP Request Node
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "tools/call",
+  "params": {
+    "name": "raynet_list_companies",
+    "arguments": { "limit": 10 }
+  },
+  "id": 1
+}
+```
 
-Add an **HTTP Request** node with these settings:
+#### HTTP Request Configuration
 
-**Authentication**: None (credentials are configured server-side)
-
-**Request Settings**:
 | Setting | Value |
 |---------|-------|
 | Method | `POST` |
 | URL | `https://raynet-mcp-server-production.up.railway.app/mcp` |
+| Content-Type | `application/json` |
+| Accept | `application/json, text/event-stream` |
 
-**Headers**:
-```json
-{
-  "Content-Type": "application/json",
-  "Accept": "application/json, text/event-stream"
-}
-```
+#### Session Management (For Stateful Operations)
 
-#### Step 2: Initialize Session
-
-First request must initialize the MCP session:
-
-**Body (JSON)**:
+1. **Initialize session** (first request):
 ```json
 {
   "jsonrpc": "2.0",
@@ -124,247 +176,134 @@ First request must initialize the MCP session:
   "params": {
     "protocolVersion": "2024-11-05",
     "capabilities": {},
-    "clientInfo": {
-      "name": "n8n-client",
-      "version": "1.0.0"
-    }
+    "clientInfo": { "name": "n8n", "version": "1.0.0" }
   },
   "id": 1
 }
 ```
 
-**Response** will include `Mcp-Session-Id` header - save this for subsequent requests.
+2. **Store `Mcp-Session-Id`** from response headers
 
-#### Step 3: List Available Tools
+3. **Include header in subsequent requests**:
+```
+Mcp-Session-Id: <session-id>
+```
 
-**Body**:
+#### Using with AI Agent (Legacy)
+
+Use `@n8n/n8n-nodes-langchain.toolHttpRequest` to create tool nodes:
+
 ```json
 {
-  "jsonrpc": "2.0",
-  "method": "tools/list",
-  "params": {},
-  "id": 2
-}
-```
-
-**Headers** (add to all subsequent requests):
-```
-Mcp-Session-Id: <session-id-from-initialize>
-```
-
-#### Step 4: Call a Tool
-
-**Body** (example: list companies):
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "tools/call",
-  "params": {
-    "name": "raynet_list_companies",
-    "arguments": {
-      "limit": 10
+  "name": "raynet_list_companies",
+  "description": "List companies from Raynet CRM",
+  "method": "POST",
+  "url": "https://raynet-mcp-server-production.up.railway.app/mcp",
+  "jsonBody": {
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "name": "raynet_list_companies",
+      "arguments": { "limit": "{{ $fromAI('limit', 10) }}" }
     }
-  },
-  "id": 3
+  }
 }
 ```
 
 ---
 
-## Configuration
+## Pre-Built Workflows
 
-### Session Management
+Ready-to-import workflows are in `n8n-workflows/`:
 
-MCP uses stateful sessions. For n8n workflows:
+| File | Description | Tools | Method |
+|------|-------------|-------|--------|
+| `raynet-mcp-http-streamable-workflow.json` | Chat with HTTP transport | 91 | MCP Client |
+| `raynet-mcp-client-workflow.json` | Chat with SSE transport | 91 | MCP Client |
+| `raynet-chat-workflow.json` | Chat with HTTP Request nodes | 10 | Legacy |
 
-1. **Initialize once** at the start of your workflow
-2. **Store the session ID** using a Set node
-3. **Include session ID** in all subsequent requests
-4. **Sessions expire** after inactivity (typically 30 minutes)
+### Import Instructions
 
-### Example Session Flow
-
-```
-[Trigger] -> [Initialize MCP] -> [Set Session ID] -> [Call Tool 1] -> [Call Tool 2] -> ...
-```
-
-### Parsing SSE Responses
-
-MCP returns Server-Sent Events (SSE) format:
-```
-event: message
-data: {"result": {...}, "jsonrpc": "2.0", "id": 1}
-```
-
-Use a **Code** node to parse:
-```javascript
-const response = $input.first().json.data;
-// Parse SSE format
-const lines = response.split('\n');
-const dataLine = lines.find(l => l.startsWith('data: '));
-if (dataLine) {
-  const jsonData = JSON.parse(dataLine.replace('data: ', ''));
-  return { json: jsonData.result };
-}
-return { json: response };
-```
+1. Go to n8n **Workflows** > **Add workflow**
+2. Click **...** menu > **Import from file**
+3. Select the workflow JSON
+4. Configure Anthropic credentials
+5. Activate workflow
 
 ---
 
-## Example Workflows
-
-### Workflow 1: Daily Company Report
-
-Automatically fetch and report new companies daily.
-
-```
-[Schedule Trigger (Daily)]
-    -> [HTTP Request: Initialize MCP]
-    -> [Set: Store Session ID]
-    -> [HTTP Request: Call raynet_list_companies]
-    -> [Code: Parse Response]
-    -> [IF: New Companies?]
-        -> [Email: Send Report]
-```
-
-**Tool Call Body**:
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "tools/call",
-  "params": {
-    "name": "raynet_search_companies",
-    "arguments": {
-      "query": "",
-      "limit": 50
-    }
-  },
-  "id": 3
-}
-```
-
-### Workflow 2: Lead from Form Submission
-
-Create a lead in Raynet when a form is submitted.
-
-```
-[Webhook: Form Submission]
-    -> [HTTP Request: Initialize MCP]
-    -> [Set: Store Session ID]
-    -> [HTTP Request: Call raynet_create_lead]
-    -> [Code: Parse Response]
-    -> [IF: Success?]
-        -> [Respond: Success]
-        -> [Respond: Error]
-```
-
-**Tool Call Body**:
-```json
-{
-  "jsonrpc": "2.0",
-  "method": "tools/call",
-  "params": {
-    "name": "raynet_create_lead",
-    "arguments": {
-      "topic": "{{ $json.subject }}",
-      "companyName": "{{ $json.company }}",
-      "contactEmail": "{{ $json.email }}",
-      "contactPhone": "{{ $json.phone }}",
-      "description": "{{ $json.message }}"
-    }
-  },
-  "id": 3
-}
-```
-
-### Workflow 3: Sync Contacts to External System
-
-```
-[Schedule Trigger (Hourly)]
-    -> [HTTP Request: Initialize MCP]
-    -> [Set: Store Session ID]
-    -> [HTTP Request: Call raynet_list_contacts]
-    -> [Code: Parse Response]
-    -> [Split In Batches]
-    -> [HTTP Request: Update External CRM]
-```
-
----
-
-## Available Tools
-
-The server provides 91 tools organized by category:
+## Available Tools (91 Total)
 
 ### Companies (11 tools)
 | Tool | Description |
 |------|-------------|
 | `raynet_list_companies` | List companies with pagination |
-| `raynet_search_companies` | Search companies by name/RegNo/TaxNo |
+| `raynet_search_companies` | Search by name/RegNo/TaxNo |
 | `raynet_get_company` | Get company details |
 | `raynet_create_company` | Create new company |
 | `raynet_update_company` | Update company |
 | `raynet_delete_company` | Delete company |
 | `raynet_list_company_addresses` | List company addresses |
-| `raynet_add_company_address` | Add address to company |
-| `raynet_update_company_address` | Update company address |
-| `raynet_delete_company_address` | Delete company address |
+| `raynet_add_company_address` | Add address |
+| `raynet_update_company_address` | Update address |
+| `raynet_delete_company_address` | Delete address |
 | `raynet_set_primary_company_address` | Set primary address |
 
 ### Contacts (12 tools)
 | Tool | Description |
 |------|-------------|
-| `raynet_list_contacts` | List contacts with filters |
+| `raynet_list_contacts` | List contacts |
 | `raynet_search_contacts` | Search contacts |
 | `raynet_get_contact` | Get contact details |
-| `raynet_create_contact` | Create new contact |
+| `raynet_create_contact` | Create contact |
 | `raynet_update_contact` | Update contact |
 | `raynet_delete_contact` | Delete contact |
-| `raynet_link_contact_to_company` | Link contact to company |
-| `raynet_list_contact_relationships` | List contact relationships |
+| `raynet_link_contact_to_company` | Link to company |
+| `raynet_list_contact_relationships` | List relationships |
 | `raynet_add_contact_relationship` | Add relationship |
 | `raynet_update_contact_relationship` | Update relationship |
 | `raynet_delete_contact_relationship` | Delete relationship |
-| `raynet_set_primary_contact_relationship` | Set primary relationship |
+| `raynet_set_primary_contact_relationship` | Set primary |
 
 ### Deals (8 tools)
 | Tool | Description |
 |------|-------------|
-| `raynet_list_deals` | List deals with filters |
+| `raynet_list_deals` | List deals |
 | `raynet_search_deals` | Search deals |
 | `raynet_get_deal` | Get deal details |
-| `raynet_create_deal` | Create new deal |
+| `raynet_create_deal` | Create deal |
 | `raynet_update_deal` | Update deal |
 | `raynet_delete_deal` | Delete deal |
-| `raynet_change_deal_status` | Change deal status |
-| `raynet_get_deal_pipeline` | Get deal pipeline stages |
+| `raynet_update_deal_phase` | Change phase |
+| `raynet_get_pipeline_value` | Calculate pipeline value |
 
 ### Leads (9 tools)
 | Tool | Description |
 |------|-------------|
-| `raynet_list_leads` | List leads with filters |
+| `raynet_list_leads` | List leads |
 | `raynet_search_leads` | Search leads |
 | `raynet_get_lead` | Get lead details |
-| `raynet_create_lead` | Create new lead |
+| `raynet_create_lead` | Create lead |
 | `raynet_update_lead` | Update lead |
 | `raynet_delete_lead` | Delete lead |
-| `raynet_convert_lead` | Convert lead to deal |
-| `raynet_change_lead_status` | Change lead status |
-| `raynet_get_lead_statistics` | Get lead statistics |
+| `raynet_update_lead_phase` | Change phase |
+| `raynet_convert_lead` | Convert to deal |
+| `raynet_get_lead_stats` | Statistics |
 
 ### Activities (9 tools)
 | Tool | Description |
 |------|-------------|
 | `raynet_list_activities` | List activities |
+| `raynet_search_activities` | Search activities |
 | `raynet_get_activity` | Get activity details |
 | `raynet_create_activity` | Create activity |
 | `raynet_update_activity` | Update activity |
 | `raynet_delete_activity` | Delete activity |
-| `raynet_complete_activity` | Mark activity complete |
-| `raynet_get_today_activities` | Get today's activities |
-| `raynet_get_overdue_activities` | Get overdue activities |
-| `raynet_get_upcoming_activities` | Get upcoming activities |
+| `raynet_complete_activity` | Mark complete |
+| `raynet_get_today_activities` | Today's activities |
+| `raynet_get_overdue_activities` | Overdue activities |
 
-### Products (7 tools) - NEW
+### Products (7 tools)
 | Tool | Description |
 |------|-------------|
 | `raynet_list_products` | List products |
@@ -373,36 +312,36 @@ The server provides 91 tools organized by category:
 | `raynet_create_product` | Create product |
 | `raynet_update_product` | Update product |
 | `raynet_delete_product` | Delete product |
-| `raynet_get_product_categories` | Get product categories |
+| `raynet_get_product_categories` | Get categories |
 
-### Offers (9 tools) - NEW
+### Offers (9 tools)
 | Tool | Description |
 |------|-------------|
 | `raynet_list_offers` | List offers |
 | `raynet_search_offers` | Search offers |
 | `raynet_get_offer` | Get offer details |
 | `raynet_create_offer` | Create offer |
-| `raynet_create_offer_with_items` | Create offer with line items |
+| `raynet_create_offer_with_items` | Create with items |
 | `raynet_update_offer` | Update offer |
 | `raynet_delete_offer` | Delete offer |
-| `raynet_add_offer_item` | Add item to offer |
-| `raynet_remove_offer_item` | Remove item from offer |
+| `raynet_add_offer_item` | Add item |
+| `raynet_remove_offer_item` | Remove item |
 
-### Sales Orders (10 tools) - NEW
+### Sales Orders (10 tools)
 | Tool | Description |
 |------|-------------|
-| `raynet_list_sales_orders` | List sales orders |
-| `raynet_search_sales_orders` | Search sales orders |
+| `raynet_list_sales_orders` | List orders |
+| `raynet_search_sales_orders` | Search orders |
 | `raynet_get_sales_order` | Get order details |
 | `raynet_create_sales_order` | Create order |
-| `raynet_create_sales_order_with_items` | Create order with items |
-| `raynet_create_sales_order_from_offer` | Convert offer to order |
+| `raynet_create_sales_order_with_items` | Create with items |
+| `raynet_create_sales_order_from_offer` | From offer |
 | `raynet_update_sales_order` | Update order |
 | `raynet_delete_sales_order` | Delete order |
-| `raynet_add_sales_order_item` | Add item to order |
-| `raynet_remove_sales_order_item` | Remove item from order |
+| `raynet_add_sales_order_item` | Add item |
+| `raynet_remove_sales_order_item` | Remove item |
 
-### Projects (8 tools) - NEW
+### Projects (8 tools)
 | Tool | Description |
 |------|-------------|
 | `raynet_list_projects` | List projects |
@@ -417,83 +356,69 @@ The server provides 91 tools organized by category:
 ### Enums (8 tools)
 | Tool | Description |
 |------|-------------|
-| `raynet_get_company_categories` | Get company categories |
-| `raynet_get_contact_sources` | Get contact sources |
-| `raynet_get_activity_types` | Get activity types |
-| `raynet_get_deal_statuses` | Get deal statuses |
-| `raynet_get_lead_statuses` | Get lead statuses |
-| `raynet_get_countries` | Get countries list |
-| `raynet_get_currencies` | Get currencies |
-| `raynet_get_users` | Get CRM users |
+| `raynet_get_company_categories` | Company categories |
+| `raynet_get_company_turnovers` | Turnover ranges |
+| `raynet_get_deal_categories` | Deal categories |
+| `raynet_get_deal_phases` | Deal phases |
+| `raynet_get_lead_phases` | Lead phases |
+| `raynet_get_contact_sources` | Contact sources |
+| `raynet_get_currencies` | Currencies |
+| `raynet_get_all_enums` | All enum data |
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
+### MCP Client Connection Issues
 
-#### 1. "Not Acceptable" Error
+#### "Could not connect to your MCP server"
 
-**Error**: `Client must accept both application/json and text/event-stream`
+**Causes & Solutions:**
+1. **Proxy buffering**: Railway/Cloudflare may buffer SSE → Use HTTP Streamable transport
+2. **Timeout**: Increase timeout in n8n settings
+3. **CORS**: Server has CORS enabled for all origins; check browser console
 
-**Solution**: Add the Accept header:
+#### Tools Not Showing in MCP Client
+
+1. Click "Refresh" button in the node
+2. Check server health: `curl https://raynet-mcp-server-production.up.railway.app/health`
+3. Verify response shows `"tools": 91`
+
+### HTTP Request Issues
+
+#### "Not Acceptable" Error
+
+**Solution**: Add Accept header:
 ```
 Accept: application/json, text/event-stream
 ```
 
-#### 2. Session Not Found
+#### Session Not Found (404)
 
-**Error**: `Session not found` (404)
+**Solution**: Re-initialize session. Sessions expire after ~30 minutes of inactivity.
 
-**Solution**:
-- Your session expired. Re-initialize with a new request.
-- Make sure you're including `Mcp-Session-Id` header.
+#### Unknown Tool Error
 
-#### 3. Missing Session ID on GET
+**Solution**: Check tool name spelling. Use underscores not hyphens. Run `tools/list` to see all tools.
 
-**Error**: `Missing Mcp-Session-Id header for GET request`
+### Server Health Check
 
-**Solution**: GET requests require an active session. Initialize first with POST.
-
-#### 4. Tool Not Found
-
-**Error**: `Unknown tool: <tool_name>`
-
-**Solution**:
-- Check tool name spelling
-- List available tools with `tools/list` method
-- Tool names use underscores, not hyphens
-
-#### 5. Invalid Arguments
-
-**Error**: `Validation failed` or `Missing required field`
-
-**Solution**:
-- Check required parameters for the tool
-- Ensure correct data types (numbers vs strings)
-- Use the `tools/list` response to see parameter schemas
-
-### Health Check
-
-Verify server status:
 ```bash
 curl https://raynet-mcp-server-production.up.railway.app/health
 ```
 
-Expected response:
+Expected:
 ```json
 {
   "status": "healthy",
   "service": "raynet-mcp-server",
   "version": "1.0.0",
-  "tools": 91,
-  "timestamp": "2026-01-28T16:00:00.000Z"
+  "tools": 91
 }
 ```
 
-### Debug Mode
+### Debug MCP Request
 
-For debugging, check the full response including headers:
 ```bash
 curl -v -X POST https://raynet-mcp-server-production.up.railway.app/mcp \
   -H "Content-Type: application/json" \
@@ -505,9 +430,9 @@ curl -v -X POST https://raynet-mcp-server-production.up.railway.app/mcp \
 
 ## Support
 
-- **GitHub Issues**: https://github.com/AiPulseInc/raynet-mcp-server/issues
-- **Raynet API Docs**: https://raynet.cz/api/
-- **MCP Protocol Spec**: https://modelcontextprotocol.io/
+- **GitHub Issues**: [raynet-mcp-server issues](https://github.com/AiPulseInc/raynet-mcp-server/issues)
+- **n8n Docs**: [MCP Client Tool](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.toolmcp/)
+- **MCP Protocol**: [Model Context Protocol](https://modelcontextprotocol.io/)
 
 ---
 

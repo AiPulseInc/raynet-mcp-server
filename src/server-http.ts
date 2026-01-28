@@ -75,6 +75,25 @@ function createMCPServer(): Server {
 
 const app = express();
 
+// n8n HTTP Streamable compatibility: ensure Accept header includes text/event-stream
+// This must be the FIRST middleware to modify headers before any processing
+// The MCP SDK requires this header, but n8n's HTTP Streamable transport may not send it
+app.use('/mcp', (req, res, next) => {
+  const currentAccept = req.headers.accept || '';
+  if (!currentAccept.includes('text/event-stream')) {
+    // Modify the raw headers object
+    req.headers.accept = 'application/json, text/event-stream';
+    // Also set via rawHeaders for libraries that read from there
+    const acceptIndex = req.rawHeaders.findIndex(h => h.toLowerCase() === 'accept');
+    if (acceptIndex >= 0) {
+      req.rawHeaders[acceptIndex + 1] = 'application/json, text/event-stream';
+    } else {
+      req.rawHeaders.push('Accept', 'application/json, text/event-stream');
+    }
+  }
+  next();
+});
+
 // Middleware
 app.use(express.json());
 
@@ -121,12 +140,6 @@ const transports = new Map<string, StreamableHTTPServerTransport>();
 
 // MCP endpoint - handles both POST (messages) and GET (SSE stream)
 app.all('/mcp', async (req: Request, res: Response) => {
-  // n8n HTTP Streamable compatibility: ensure Accept header includes text/event-stream
-  // The MCP SDK requires this header, but n8n's HTTP Streamable transport may not send it
-  if (!req.headers.accept || !req.headers.accept.includes('text/event-stream')) {
-    req.headers.accept = 'application/json, text/event-stream';
-  }
-
   logger.info('MCP request received', { method: req.method, sessionId: req.headers['mcp-session-id'], accept: req.headers.accept });
 
   try {
