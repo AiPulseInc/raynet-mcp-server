@@ -1,8 +1,9 @@
 # Raynet MCP Server - Claude Context
 
-**Last Updated:** 2026-01-26
-**Project Status:** Production-Ready (Major Feature Expansion Complete)
+**Last Updated:** 2026-01-29
+**Project Status:** Production-Ready (Deployed to Railway with Auto-Deploy)
 **Test Pass Rate:** 100% (90/90 tests passing)
+**Deployment:** Railway with GitHub auto-deploy enabled
 
 ---
 
@@ -21,7 +22,39 @@ This is a Model Context Protocol (MCP) server that integrates Claude AI with Ray
 
 ---
 
-## Recent Session Summary (2026-01-26)
+## Recent Session Summary (2026-01-29)
+
+### What Was Accomplished
+
+**Major Achievement:** Fixed activity filtering and owner assignment bugs. Configured Railway auto-deployment from GitHub. Updated n8n workflow prompts to ensure proper company context when creating activities.
+
+**Bugs Fixed:**
+1. **Activity company filter incorrect** - Changed from `company[EQ]` to `companyContextFilter` (Raynet API uses special context filters for activities)
+2. **Activity owner assignment not company-aware** - Activities now automatically use the company's CRM owner when `companyId` is provided
+3. **InPost activities not linked to company** - Fixed Task 268 and Meeting 269 to properly link to InPost company (ID 46)
+
+**Infrastructure Updates:**
+- **GitHub auto-deploy to Railway** - Configured Railway to automatically deploy on push to main branch (no more manual `railway up` needed)
+- **Bearer token authentication** - Verified HTTP server properly authenticates requests
+- **n8n workflow updates** - Updated Raymund workflow CRM Agent prompt via n8n API to require `companyId` when creating activities
+
+**Testing & Verification:**
+- Verified activity creation with company context works correctly
+- Confirmed owner assignment uses company's CRM owner
+- Tested GitHub → Railway auto-deployment pipeline
+- All systems operational on Railway
+
+**Files Modified:**
+- `src/api/activities.ts` - Fixed company filter and added company-aware owner assignment
+
+**Git Commits:**
+- `14f320e` - Verify GitHub auto-deploy
+- `984f984` - Assign activities to company's CRM owner
+- `621b028` - Fix activity company filter - use companyContextFilter
+
+---
+
+## Previous Session Summary (2026-01-26)
 
 ### What Was Accomplished
 
@@ -286,6 +319,38 @@ GET /company/123/relationship/person
 
 **Rule:** Use relationship endpoints when filtering by parent entities.
 
+### Activity Filtering by Company (CRITICAL)
+
+The Raynet API uses special "context filters" for activities instead of standard query operators:
+
+```typescript
+// WRONG - standard query operators don't work for activities
+params['company[EQ]'] = companyId;
+params['person[EQ]'] = contactId;
+params['businessCase[EQ]'] = dealId;
+
+// CORRECT - use context filters
+params['companyContextFilter'] = companyId;
+params['personContextFilter'] = contactId;
+params['businessCaseContextFilter'] = dealId;
+```
+
+**Rule:** Always use `*ContextFilter` parameters when filtering activities by related entities.
+
+### Company-Aware Owner Assignment
+
+When creating activities for a specific company, the activity should be assigned to that company's CRM owner:
+
+```typescript
+// Get company's owner
+const companyOwnerId = await getCompanyOwnerId(companyId);
+
+// Use company owner, or fall back to default
+const ownerId = companyOwnerId ?? await getOwnerId();
+```
+
+**Rule:** Activities should inherit ownership from their parent company when possible.
+
 ---
 
 ## API Service Layer Conventions
@@ -462,6 +527,54 @@ RAYNET_API_KEY=your-api-key
 PORT=3000
 NODE_ENV=development
 LOG_LEVEL=info
+
+# For HTTP server with authentication
+MCP_AUTH_TOKEN=your-bearer-token  # Required for Railway/n8n deployment
+```
+
+---
+
+## Deployment
+
+### Railway Deployment
+
+The MCP server is deployed on Railway with automatic deployment from GitHub.
+
+**Configuration:**
+- **Auto-deploy:** Enabled on push to main branch
+- **Start command:** `npm start` (runs HTTP server on port 3000)
+- **Build command:** `npm install && npm run build`
+- **Authentication:** Bearer token required in Authorization header
+
+**Environment Variables on Railway:**
+- All Raynet credentials (RAYNET_INSTANCE_URL, RAYNET_INSTANCE_NAME, RAYNET_USERNAME, RAYNET_API_KEY)
+- MCP_AUTH_TOKEN for request authentication
+- PORT (provided by Railway)
+- NODE_ENV=production
+
+**Deployment Process:**
+1. Push code to GitHub main branch
+2. Railway automatically detects changes
+3. Railway builds and deploys new version
+4. Service restarts with zero downtime
+
+**Access:**
+- Public URL provided by Railway
+- Use Bearer token in Authorization header
+- n8n workflows connect via HTTP JSON-RPC
+
+### Local Development
+
+For local development with STDIO transport:
+
+```bash
+npm run dev
+```
+
+For local development with HTTP server:
+
+```bash
+npm run dev:http
 ```
 
 ---
@@ -532,14 +645,27 @@ delete payload.priority; // Not supported by Raynet
 - ✅ Create comprehensive test suite
 - ✅ Achieve 100% test pass rate
 
-### Future Enhancements (Not Urgent)
+### Future Enhancements
+
+**Performance Optimizations (Low Priority):**
 - [ ] Parallel requests for activity queries (reduce 30s → ~8s)
 - [ ] Response caching for enum data
-- [ ] Return structured data alongside formatted text
 - [ ] Add retry logic with exponential backoff
 - [ ] Add rate limit tracking and warnings
+
+**Code Quality & Testing (Medium Priority):**
+- [ ] Automatic semantic versioning
+- [ ] Review against MCP best practices guide
+- [ ] Security audit (API key handling, input validation, error messages)
 - [ ] Comprehensive unit test coverage
 - [ ] API response type validation
+- [ ] Return structured data alongside formatted text
+
+**New Features (As Requested):**
+- [ ] Bulk operations support
+- [ ] Advanced filtering and search
+- [ ] Custom reporting tools
+- [ ] Webhook support for real-time updates
 
 ---
 
@@ -632,6 +758,58 @@ const response = await client.post(`/project/${projectId}/participants/`, { ... 
 { person: { id: personId }, note: 'Developer' }
 ```
 
+### Bug 11: Activity Company Filter Incorrect (2026-01-29)
+**File:** `src/api/activities.ts`
+**Issue:** Filtering activities by company ID returned no results
+**Root Cause:** Raynet API uses special context filters (`companyContextFilter`) instead of standard query operators (`company[EQ]`)
+**Before:**
+```typescript
+if (companyId) params['company[EQ]'] = companyId;
+if (contactId) params['person[EQ]'] = contactId;
+if (dealId) params['businessCase[EQ]'] = dealId;
+```
+**After:**
+```typescript
+// Raynet API uses companyContextFilter for filtering activities by company
+if (companyId) params['companyContextFilter'] = companyId;
+if (contactId) params['personContextFilter'] = contactId;
+if (dealId) params['businessCaseContextFilter'] = dealId;
+```
+
+### Bug 12: Activity Owner Assignment Not Company-Aware (2026-01-29)
+**File:** `src/api/activities.ts`
+**Issue:** All activities were assigned to a default owner, not the company's CRM owner
+**Root Cause:** Activity creation didn't check company ownership before assigning
+**Added:**
+```typescript
+/**
+ * Get the owner ID for a specific company.
+ * Returns the CRM user who manages/owns this company account.
+ */
+private async getCompanyOwnerId(companyId: number): Promise<number | null> {
+  try {
+    const response = await this.client.getOne<{ owner?: { id: number } }>(`/company/${companyId}/`);
+    if (response.data?.owner?.id) {
+      logger.info('Found company owner', { companyId, ownerId: response.data.owner.id });
+      return response.data.owner.id;
+    }
+  } catch (error) {
+    logger.warn('Failed to get owner ID for company', { companyId, error });
+  }
+  return null;
+}
+
+// In createActivity:
+let ownerId: number;
+if (companyId) {
+  const companyOwnerId = await this.getCompanyOwnerId(companyId);
+  ownerId = companyOwnerId ?? await this.getOwnerId();
+  logger.info('Using company owner for activity', { companyId, ownerId });
+} else {
+  ownerId = await this.getOwnerId();
+}
+```
+
 ---
 
 ## Session Close Checklist
@@ -639,7 +817,8 @@ const response = await client.post(`/project/${projectId}/participants/`, { ... 
 - [x] All critical bugs fixed
 - [x] All tests passing (100% pass rate)
 - [x] Changes committed to git
-- [x] Changes pushed to GitHub
+- [x] Changes pushed to GitHub (auto-deploys to Railway)
+- [x] Railway deployment verified and working
 - [x] Test report documented (docs/TEST_REPORT.md)
 - [x] Code quality maintained (defensive programming)
 - [x] No technical debt introduced
@@ -647,7 +826,7 @@ const response = await client.post(`/project/${projectId}/participants/`, { ... 
 
 ---
 
-**Status:** Project is production-ready with full API coverage. All 91 MCP tools are fully functional and tested.
+**Status:** Project is production-ready, deployed to Railway with auto-deploy from GitHub. All 91 MCP tools are fully functional and tested.
 
 **Current Tool Count:** 91 tools (47 original + 44 new)
 - Companies: 11 tools (6 base + 5 address management)
@@ -661,4 +840,14 @@ const response = await client.post(`/project/${projectId}/participants/`, { ... 
 - Projects: 8 tools
 - Enums: 8 tools
 
-**Next Session:** Focus on optional enhancements (performance optimizations, caching, parallel requests) or new features as requested by the user.
+**Deployment Status:**
+- Railway: Live and healthy
+- Auto-deploy: Enabled (pushes to main → automatic deployment)
+- n8n Integration: Working (Raynet-MCP and Raymund workflows)
+- Authentication: Bearer token enabled
+
+**Next Session Priorities:**
+1. Automatic semantic versioning
+2. MCP best practices review
+3. Security audit
+4. Optional performance optimizations
