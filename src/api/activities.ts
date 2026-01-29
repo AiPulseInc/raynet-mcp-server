@@ -358,7 +358,14 @@ export class ActivitiesService {
         `${this.getEndpoint(activityType)}/${activityId}/`
       );
 
-      return { activity: response.data };
+      // Add _entityName since it's not returned by single-get endpoint
+      // but is needed for formatting
+      const activity = {
+        ...response.data,
+        _entityName: activityType,
+      };
+
+      return { activity };
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw new NotFoundError(ACTIVITY_NAMES_PL[activityType], activityId);
@@ -424,7 +431,13 @@ export class ActivitiesService {
         title: response.data.title,
       });
 
-      return { activity: response.data };
+      // Add _entityName since it's not returned by API but needed for formatting
+      const activity = {
+        ...response.data,
+        _entityName: type,
+      };
+
+      return { activity };
     } catch (error) {
       logger.error('Activity creation failed', {
         type,
@@ -483,7 +496,13 @@ export class ActivitiesService {
 
       logger.info('Activity updated', { activityId, title: updatedActivity.data.title });
 
-      return { activity: updatedActivity.data };
+      // Add _entityName since it's not returned by API but needed for formatting
+      const activity = {
+        ...updatedActivity.data,
+        _entityName: activityType,
+      };
+
+      return { activity };
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw new NotFoundError(ACTIVITY_NAMES_PL[activityType], activityId);
@@ -531,7 +550,13 @@ export class ActivitiesService {
 
       logger.info('Activity completed', { activityId, title: updatedActivity.data.title });
 
-      return { activity: updatedActivity.data };
+      // Add _entityName since it's not returned by API but needed for formatting
+      const activity = {
+        ...updatedActivity.data,
+        _entityName: activityType,
+      };
+
+      return { activity };
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw new NotFoundError(ACTIVITY_NAMES_PL[activityType], activityId);
@@ -568,7 +593,13 @@ export class ActivitiesService {
 
       logger.info('Activity cancelled', { activityId });
 
-      return { activity: updatedActivity.data };
+      // Add _entityName since it's not returned by API but needed for formatting
+      const activity = {
+        ...updatedActivity.data,
+        _entityName: activityType,
+      };
+
+      return { activity };
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw new NotFoundError(ACTIVITY_NAMES_PL[activityType], activityId);
