@@ -179,9 +179,10 @@ export class ActivitiesService {
       };
 
       if (status) params.status = status;
-      if (companyId) params['company[EQ]'] = companyId;
-      if (contactId) params['person[EQ]'] = contactId;
-      if (dealId) params['businessCase[EQ]'] = dealId;
+      // Raynet API uses companyContextFilter for filtering activities by company
+      if (companyId) params['companyContextFilter'] = companyId;
+      if (contactId) params['personContextFilter'] = contactId;
+      if (dealId) params['businessCaseContextFilter'] = dealId;
 
       try {
         const response = await this.client.getList<RaynetActivity>(
@@ -235,9 +236,10 @@ export class ActivitiesService {
     };
 
     if (status) params.status = status;
-    if (companyId) params['company[EQ]'] = companyId;
-    if (contactId) params['person[EQ]'] = contactId;
-    if (dealId) params['businessCase[EQ]'] = dealId;
+    // Raynet API uses companyContextFilter for filtering activities by company
+    if (companyId) params['companyContextFilter'] = companyId;
+    if (contactId) params['personContextFilter'] = contactId;
+    if (dealId) params['businessCaseContextFilter'] = dealId;
 
     logger.info('Listing activities by type', { type, params });
 
