@@ -420,20 +420,23 @@ export class ActivitiesService {
 
     // Raynet API uses PUT for creating new records
     try {
-      const response = await this.client.put<RaynetActivity>(
+      const createResponse = await this.client.put<{ id: number }>(
         `${this.getEndpoint(type)}/`,
         payload
       );
 
-      logger.info('Activity created', {
-        activityId: response.data.id,
-        type,
-        title: response.data.title,
-      });
+      const activityId = createResponse.data.id;
+
+      logger.info('Activity created', { activityId, type, title });
+
+      // Raynet API only returns ID on create, so fetch the full activity
+      const fullActivity = await this.client.getOne<RaynetActivity>(
+        `${this.getEndpoint(type)}/${activityId}/`
+      );
 
       // Add _entityName since it's not returned by API but needed for formatting
       const activity = {
-        ...response.data,
+        ...fullActivity.data,
         _entityName: type,
       };
 
