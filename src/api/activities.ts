@@ -156,6 +156,23 @@ export class ActivitiesService {
     return this.cachedOwnerId;
   }
 
+  /**
+   * Get the owner ID for a specific company.
+   * Returns the CRM user who manages/owns this company account.
+   */
+  private async getCompanyOwnerId(companyId: number): Promise<number | null> {
+    try {
+      const response = await this.client.getOne<{ owner?: { id: number } }>(`/company/${companyId}/`);
+      if (response.data?.owner?.id) {
+        logger.info('Found company owner', { companyId, ownerId: response.data.owner.id });
+        return response.data.owner.id;
+      }
+    } catch (error) {
+      logger.warn('Failed to get owner ID for company', { companyId, error });
+    }
+    return null;
+  }
+
   // ==========================================================================
   // List Operations
   // ==========================================================================
@@ -394,7 +411,16 @@ export class ActivitiesService {
     }
 
     // Get owner ID (required by Raynet API)
-    const ownerId = await this.getOwnerId();
+    // If companyId is provided, use that company's CRM owner
+    // Otherwise fall back to the default owner
+    let ownerId: number;
+    if (companyId) {
+      const companyOwnerId = await this.getCompanyOwnerId(companyId);
+      ownerId = companyOwnerId ?? await this.getOwnerId();
+      logger.info('Using company owner for activity', { companyId, ownerId });
+    } else {
+      ownerId = await this.getOwnerId();
+    }
     const normalizedTill = normalizeDateTime(scheduledTill);
 
     const payload: ActivityPayload = {
