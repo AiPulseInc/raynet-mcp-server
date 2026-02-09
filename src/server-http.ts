@@ -12,17 +12,20 @@ console.log('[STARTUP] PORT env:', process.env.PORT);
 console.log('[STARTUP] NODE_ENV env:', process.env.NODE_ENV);
 
 import express, { Request, Response, NextFunction } from 'express';
-import { randomUUID } from 'crypto';
+import helmet from 'helmet';
+import { randomUUID, timingSafeEqual } from 'crypto';
 import { loadConfig, validateConfig } from './config/env';
 import { logger } from './utils/logger';
-import { allToolDefinitions, handleTool } from './tools';
+import { getToolDefinitions, handleTool } from './tools';
 import { getRaynetClient } from './api/client';
+import { VERSION, APP_NAME } from './version';
 
 // ============================================================================
 // Authentication
 // ============================================================================
 
 const MCP_API_KEY = process.env.MCP_API_KEY || '';
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 
 /**
  * Bearer token authentication middleware
@@ -67,8 +70,10 @@ function authenticateBearer(req: Request, res: Response, next: NextFunction): vo
 
   const token = parts[1];
 
-  // Validate token
-  if (token !== MCP_API_KEY) {
+  // Validate token (timing-safe comparison to prevent side-channel attacks)
+  const tokenBuffer = Buffer.from(token || '');
+  const keyBuffer = Buffer.from(MCP_API_KEY);
+  if (tokenBuffer.length !== keyBuffer.length || !timingSafeEqual(tokenBuffer, keyBuffer)) {
     logger.warn('Unauthorized request - invalid token', { ip: req.ip });
     res.status(401).json({
       jsonrpc: '2.0',
@@ -117,6 +122,7 @@ interface Session {
 // Session Management
 // ============================================================================
 
+const MAX_SESSIONS = 1000;
 const sessions = new Map<string, Session>();
 
 // Clean up old sessions every 5 minutes
@@ -143,8 +149,8 @@ function handleInitialize(params: Record<string, unknown>): JsonRpcResponse['res
       tools: {},
     },
     serverInfo: {
-      name: 'raynet-mcp-server',
-      version: '1.0.0',
+      name: APP_NAME,
+      version: VERSION,
     },
   };
 }
@@ -155,9 +161,10 @@ function handleInitialized(): JsonRpcResponse['result'] {
 }
 
 function handleListTools(): JsonRpcResponse['result'] {
-  logger.debug('Listing tools', { count: allToolDefinitions.length });
+  const tools = getToolDefinitions();
+  logger.debug('Listing tools', { count: tools.length });
   return {
-    tools: allToolDefinitions,
+    tools,
   };
 }
 
@@ -165,7 +172,8 @@ async function handleCallTool(params: Record<string, unknown>): Promise<JsonRpcR
   const name = params.name as string;
   const args = (params.arguments || {}) as Record<string, unknown>;
 
-  logger.info('Tool called', { tool: name, args });
+  logger.info('Tool called', { tool: name });
+  logger.debug('Tool arguments', { tool: name, args });
 
   try {
     const result = await handleTool(name, args);
@@ -210,7 +218,7 @@ async function handleJsonRpcRequest(request: JsonRpcRequest): Promise<JsonRpcRes
           id: id ?? null,
           error: {
             code: -32601,
-            message: `Method not found: ${method}`,
+            message: 'Method not found',
           },
         };
     }
@@ -239,12 +247,15 @@ async function handleJsonRpcRequest(request: JsonRpcRequest): Promise<JsonRpcRes
 
 const app = express();
 
-// Middleware - parse JSON
-app.use(express.json());
+// Security headers
+app.use(helmet());
 
-// CORS for n8n and other external clients
+// Middleware - parse JSON
+app.use(express.json({ limit: '1mb' }));
+
+// CORS for n8n and other external clients (configurable via CORS_ORIGIN env var)
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Origin', CORS_ORIGIN);
   res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id, Accept');
   res.header('Access-Control-Expose-Headers', 'Mcp-Session-Id');
@@ -259,9 +270,9 @@ app.use((req, res, next) => {
 app.get('/health', (req: Request, res: Response) => {
   res.json({
     status: 'healthy',
-    service: 'raynet-mcp-server',
-    version: '1.0.0',
-    tools: allToolDefinitions.length,
+    service: APP_NAME,
+    version: VERSION,
+    tools: getToolDefinitions().length,
     timestamp: new Date().toISOString(),
   });
 });
@@ -270,9 +281,9 @@ app.get('/health', (req: Request, res: Response) => {
 app.get('/', (req: Request, res: Response) => {
   res.json({
     name: 'Raynet MCP Server',
-    version: '1.0.0',
+    version: VERSION,
     description: 'MCP server for Raynet CRM integration',
-    tools: allToolDefinitions.length,
+    tools: getToolDefinitions().length,
     authentication: MCP_API_KEY ? 'Bearer token required' : 'disabled',
     endpoints: {
       health: '/health (public)',
@@ -288,8 +299,8 @@ app.post('/mcp', authenticateBearer, async (req: Request, res: Response) => {
   logger.info('MCP request received', {
     method: req.method,
     sessionId,
-    body: req.body,
   });
+  logger.debug('MCP request body', { body: req.body });
 
   try {
     const body = req.body;
@@ -302,7 +313,7 @@ app.post('/mcp', authenticateBearer, async (req: Request, res: Response) => {
 
       // Generate session ID if this is an initialize request
       const hasInitialize = body.some((r: JsonRpcRequest) => r.method === 'initialize');
-      if (hasInitialize && !sessionId) {
+      if (hasInitialize && !sessionId && sessions.size < MAX_SESSIONS) {
         const newSessionId = randomUUID();
         sessions.set(newSessionId, {
           id: newSessionId,
@@ -322,7 +333,7 @@ app.post('/mcp', authenticateBearer, async (req: Request, res: Response) => {
     const response = await handleJsonRpcRequest(request);
 
     // Generate session ID for initialize
-    if (request.method === 'initialize' && !sessionId) {
+    if (request.method === 'initialize' && !sessionId && sessions.size < MAX_SESSIONS) {
       const newSessionId = randomUUID();
       sessions.set(newSessionId, {
         id: newSessionId,
@@ -384,7 +395,8 @@ async function startHTTPServer(): Promise<void> {
   logger.info('Starting Raynet MCP HTTP Server', {
     instanceName: config.raynet.instanceName,
     nodeEnv: config.server.nodeEnv,
-    toolCount: allToolDefinitions.length,
+    toolMode: config.server.toolMode,
+    toolCount: getToolDefinitions().length,
     port,
   });
 
@@ -398,6 +410,12 @@ async function startHTTPServer(): Promise<void> {
     throw error;
   }
 
+  // Enforce authentication in production
+  if (!MCP_API_KEY && config.server.nodeEnv === 'production') {
+    logger.error('MCP_API_KEY is required in production mode. Set MCP_API_KEY environment variable.');
+    throw new Error('MCP_API_KEY is required in production mode');
+  }
+
   // Start HTTP server
   const authStatus = MCP_API_KEY ? 'Enabled (Bearer token)' : 'DISABLED (set MCP_API_KEY)';
 
@@ -409,7 +427,7 @@ async function startHTTPServer(): Promise<void> {
 ╠════════════════════════════════════════════════════════════════╣
 ║  Status:    Running                                            ║
 ║  Port:      ${String(port).padEnd(50)}║
-║  Tools:     ${String(allToolDefinitions.length).padEnd(50)}║
+║  Tools:     ${String(getToolDefinitions().length + ' (' + config.server.toolMode + ' mode)').padEnd(50)}║
 ║  Auth:      ${authStatus.padEnd(50)}║
 ║  Endpoints:                                                    ║
 ║    GET  /         - Server info (public)                       ║

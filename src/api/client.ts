@@ -31,6 +31,7 @@ import type {
   RaynetErrorResponse,
   RateLimitInfo,
 } from '../types';
+import { VERSION } from '../version';
 
 // ============================================================================
 // Types
@@ -131,7 +132,7 @@ export class RaynetClient {
       timeout: config.raynet.timeoutMs,
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'Raynet-MCP-Server/1.0.0',
+        'User-Agent': `Raynet-MCP-Server/${VERSION}`,
         'X-Instance-Name': config.raynet.instanceName,
       },
       auth: {

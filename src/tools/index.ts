@@ -2,6 +2,8 @@
  * MCP Tools Module Exports
  */
 
+import { getConfig } from '../config/env';
+
 // Company tools
 export {
   companyToolDefinitions,
@@ -153,8 +155,45 @@ export {
   handleRemoveProjectParticipant,
 } from './projects';
 
-// All tool definitions
-export const allToolDefinitions = [
+// Mobile tool names — 25 essential tools for field sales reps
+const mobileToolNames = new Set([
+  // Companies (3)
+  'raynet_search_companies',
+  'raynet_get_company',
+  'raynet_create_company',
+  // Contacts (3)
+  'raynet_search_contacts',
+  'raynet_get_contact',
+  'raynet_create_contact',
+  // Deals (5)
+  'raynet_list_deals',
+  'raynet_search_deals',
+  'raynet_get_deal',
+  'raynet_create_deal',
+  'raynet_update_deal_phase',
+  // Activities (5)
+  'raynet_create_activity',
+  'raynet_complete_activity',
+  'raynet_get_today_activities',
+  'raynet_get_overdue_activities',
+  'raynet_search_activities',
+  // Leads (4)
+  'raynet_search_leads',
+  'raynet_get_lead',
+  'raynet_create_lead',
+  'raynet_convert_lead',
+  // Products (2)
+  'raynet_search_products',
+  'raynet_get_product',
+  // Offers (2)
+  'raynet_create_offer_with_items',
+  'raynet_get_offer',
+  // Enums (1)
+  'raynet_get_all_enums',
+]);
+
+// All tool definitions (full set)
+const fullToolDefinitions = [
   ...require('./companies').companyToolDefinitions,
   ...require('./contacts').contactToolDefinitions,
   ...require('./deals').dealToolDefinitions,
@@ -166,6 +205,22 @@ export const allToolDefinitions = [
   ...require('./salesOrders').salesOrderToolDefinitions,
   ...require('./projects').projectToolDefinitions,
 ];
+
+// Export tool definitions based on TOOL_MODE env variable
+export function getToolDefinitions(): typeof fullToolDefinitions {
+  try {
+    const config = getConfig();
+    if (config.server.toolMode === 'mobile') {
+      return fullToolDefinitions.filter((t: { name: string }) => mobileToolNames.has(t.name));
+    }
+  } catch {
+    // Config not loaded yet (e.g. during tests), return full set
+  }
+  return fullToolDefinitions;
+}
+
+// Backward-compatible export (lazy getter)
+export const allToolDefinitions = fullToolDefinitions;
 
 // Tool handler router
 export async function handleTool(

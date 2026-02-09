@@ -19,11 +19,14 @@ export interface RaynetConfig {
   rateLimitBuffer: number;
 }
 
+export type ToolMode = 'full' | 'mobile';
+
 export interface ServerConfig {
   port: number;
   nodeEnv: 'development' | 'production' | 'test';
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   logFormat: 'json' | 'pretty';
+  toolMode: ToolMode;
 }
 
 export interface AppConfig {

@@ -12,8 +12,9 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { loadConfig, validateConfig } from './config/env';
 import { logger } from './utils/logger';
-import { allToolDefinitions, handleTool } from './tools';
+import { getToolDefinitions, handleTool } from './tools';
 import { getRaynetClient } from './api/client';
+import { VERSION, APP_NAME } from './version';
 
 // ============================================================================
 // Server Setup
@@ -25,8 +26,8 @@ import { getRaynetClient } from './api/client';
 export function createServer(): Server {
   const server = new Server(
     {
-      name: 'raynet-mcp-server',
-      version: '1.0.0',
+      name: APP_NAME,
+      version: VERSION,
     },
     {
       capabilities: {
@@ -40,10 +41,11 @@ export function createServer(): Server {
   // ==========================================================================
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    logger.debug('Listing available tools', { count: allToolDefinitions.length });
+    const tools = getToolDefinitions();
+    logger.debug('Listing available tools', { count: tools.length });
 
     return {
-      tools: allToolDefinitions,
+      tools,
     };
   });
 
@@ -54,7 +56,8 @@ export function createServer(): Server {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
-    logger.info('Tool called', { tool: name, args });
+    logger.info('Tool called', { tool: name });
+    logger.debug('Tool arguments', { tool: name, args });
 
     try {
       return await handleTool(name, args);
@@ -98,7 +101,8 @@ export async function startServer(): Promise<void> {
   logger.info('Starting Raynet MCP Server', {
     instanceName: config.raynet.instanceName,
     nodeEnv: config.server.nodeEnv,
-    toolCount: allToolDefinitions.length,
+    toolMode: config.server.toolMode,
+    toolCount: getToolDefinitions().length,
   });
 
   // Initialize API client to verify connection

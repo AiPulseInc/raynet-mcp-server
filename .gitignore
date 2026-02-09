@@ -41,6 +41,8 @@ logs/
 tmp/
 temp/
 *.tmp
+.agent/
+
 
 # Railway
 .railway/

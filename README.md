@@ -3,12 +3,12 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-90%2F90%20passing-brightgreen.svg)](docs/TEST_REPORT.md)
-[![Production](https://img.shields.io/badge/status-production%20ready-brightgreen.svg)](CLAUDE.md)
+[![Version](https://img.shields.io/badge/version-0.80.0-blue.svg)](CHANGELOG.md)
+[![Production](https://img.shields.io/badge/status-production%20ready-brightgreen.svg)](CHANGELOG.md)
 
 A Model Context Protocol (MCP) server that provides seamless integration between Claude AI and Raynet CRM, enabling AI-powered CRM operations through natural language interactions.
 
-**Latest Update (2026-01-26):** Major feature expansion with 91 MCP tools. 100% test pass rate (90/90 tests). Production ready.
+**v0.80.0 (2026-02-09):** Mobile mode — 25 essential tools for field sales reps (default). Set `TOOL_MODE=full` for all 91 tools. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Overview
 
@@ -19,8 +19,10 @@ This MCP server bridges Claude AI with the Raynet CRM system, allowing users to 
 - **Natural Language CRM Operations**: Manage companies, contacts, deals, activities, leads, products, offers, sales orders, and projects through conversational AI
 - **Polish Language Support**: Native Polish interface with proper diacritics handling
 - **91 MCP Tools**: Comprehensive coverage of CRM workflows including sales pipeline, quoting, and project management
-- **Real-time Integration**: stdio transport for responsive interactions
-- **Enterprise-Ready**: Rate limiting, error handling, and retry logic
+- **Mobile Mode (default)**: 25 essential tools for field sales reps — reduces LLM context and focuses on field-relevant actions
+- **Dual Transport**: stdio (Claude Desktop) and HTTP/JSON-RPC (n8n, Telegram, remote deployment)
+- **Bearer Token Auth**: Secure HTTP transport with `MCP_API_KEY` authentication
+- **Enterprise-Ready**: Rate limiting, error handling, retry logic with exponential backoff
 - **Claude Desktop Compatible**: Works with Claude Desktop MCP configuration
 
 ## Available Tools (91 Total)
@@ -216,6 +218,13 @@ RAYNET_API_KEY=your-api-key-here
 PORT=3000
 NODE_ENV=development
 LOG_LEVEL=info
+LOG_FORMAT=pretty
+
+# Tool Mode: 'mobile' (25 tools, default) or 'full' (all 91 tools)
+TOOL_MODE=mobile
+
+# HTTP Transport Authentication (optional, for remote deployment)
+# MCP_API_KEY=your-bearer-token-here
 ```
 
 #### Finding Your Credentials
@@ -232,12 +241,20 @@ LOG_LEVEL=info
 ### Running the Server
 
 ```bash
-# Development mode
+# Development mode (stdio transport — for Claude Desktop)
 npm run dev
+
+# Development mode (HTTP transport — for n8n, Telegram, remote)
+npm run dev:http
 
 # Production build
 npm run build
+
+# Start HTTP server (default, for deployment)
 npm start
+
+# Start stdio server (for Claude Desktop)
+npm run start:stdio
 ```
 
 ### Using with Claude Desktop
@@ -260,6 +277,43 @@ Add to your Claude Desktop MCP configuration (`~/.config/claude/claude_desktop_c
   }
 }
 ```
+
+## Mobile Mode (25 Tools for Field Sales Reps)
+
+Set `TOOL_MODE=mobile` to expose only 25 essential tools optimized for reps working on mobile (Claude, Telegram, n8n). This reduces LLM context usage and focuses the AI on field-relevant actions.
+
+```json
+{
+  "mcpServers": {
+    "raynet": {
+      "command": "node",
+      "args": ["/path/to/raynet-mcp-server/dist/index.js"],
+      "env": {
+        "TOOL_MODE": "mobile",
+        "RAYNET_INSTANCE_URL": "https://app.raynet.cz/api/v2",
+        "RAYNET_INSTANCE_NAME": "your-instance",
+        "RAYNET_USERNAME": "your-email",
+        "RAYNET_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+**Mobile tools include:**
+
+| Area | Tools | What reps can do |
+|------|-------|-----------------|
+| Companies (3) | search, get, create | Find & add companies |
+| Contacts (3) | search, get, create | Find & add contacts |
+| Deals (5) | list, search, get, create, update_phase | Manage pipeline |
+| Activities (5) | create, complete, today, overdue, search | Log & track work |
+| Leads (4) | search, get, create, convert | Capture & qualify leads |
+| Products (2) | search, get | Look up products/prices |
+| Offers (2) | create_with_items, get | Quick quoting |
+| Enums (1) | get_all_enums | Load all picklist values |
+
+**Not included in mobile mode:** delete operations, address management, contact relationships, sales orders, projects, individual enum lookups, and bulk update operations. These remain available when `TOOL_MODE=full`.
 
 ## Example Conversations (in Polish)
 
@@ -317,48 +371,49 @@ Response: "Statystyki Leadow
 ```
 raynet-mcp-server/
 ├── src/
-│   ├── index.ts              # Entry point
-│   ├── server.ts             # MCP server setup
+│   ├── index.ts              # Entry point (stdio transport)
+│   ├── server.ts             # MCP server (stdio)
+│   ├── server-http.ts        # MCP server (HTTP/JSON-RPC)
+│   ├── version.ts            # Centralized version constant
 │   ├── config/
-│   │   └── env.ts            # Environment configuration
+│   │   └── env.ts            # Environment configuration + Zod validation
 │   ├── api/
-│   │   ├── client.ts         # Raynet API client
+│   │   ├── client.ts         # Raynet API client (auth, retries, rate limiting)
 │   │   ├── companies.ts      # Companies service
 │   │   ├── contacts.ts       # Contacts service
 │   │   ├── deals.ts          # Deals service
 │   │   ├── activities.ts     # Activities service
 │   │   ├── leads.ts          # Leads service
-│   │   ├── products.ts       # Products service (NEW)
-│   │   ├── offers.ts         # Offers service (NEW)
-│   │   ├── salesOrders.ts    # Sales orders service (NEW)
-│   │   ├── projects.ts       # Projects service (NEW)
+│   │   ├── products.ts       # Products service
+│   │   ├── offers.ts         # Offers service
+│   │   ├── salesOrders.ts    # Sales orders service
+│   │   ├── projects.ts       # Projects service
 │   │   └── enums.ts          # Enums/lookups service
 │   ├── tools/
+│   │   ├── index.ts          # Tool registry, mobile filter, router
 │   │   ├── companies.ts      # Company & address MCP tools
 │   │   ├── contacts.ts       # Contact & relationship MCP tools
 │   │   ├── deals.ts          # Deal MCP tools
 │   │   ├── activities.ts     # Activity MCP tools
 │   │   ├── leads.ts          # Lead MCP tools
-│   │   ├── products.ts       # Product MCP tools (NEW)
-│   │   ├── offers.ts         # Offer MCP tools (NEW)
-│   │   ├── salesOrders.ts    # Sales order MCP tools (NEW)
-│   │   ├── projects.ts       # Project MCP tools (NEW)
+│   │   ├── products.ts       # Product MCP tools
+│   │   ├── offers.ts         # Offer MCP tools
+│   │   ├── salesOrders.ts    # Sales order MCP tools
+│   │   ├── projects.ts       # Project MCP tools
 │   │   └── enums.ts          # Enum MCP tools
 │   ├── utils/
-│   │   ├── logger.ts         # Winston logger
-│   │   └── errors.ts         # Error handling
+│   │   ├── logger.ts         # Winston logger with sensitive data redaction
+│   │   └── errors.ts         # Error classes with Polish messages
 │   └── types/
 │       └── index.ts          # TypeScript types
-├── scripts/
-│   ├── test-companies.js     # Company tests
-│   ├── test-contacts.js      # Contact tests
-│   ├── test-deals.js         # Deal tests
-│   ├── test-activities.js    # Activity tests
-│   └── test-leads.js         # Lead tests
+├── tests/
+│   └── unit/                 # Unit tests (Vitest)
 ├── docs/
 │   ├── RAYNET-API.md         # API documentation
 │   └── TEST_REPORT.md        # Integration test results
-├── .env.example
+├── .env.example              # Environment template
+├── CHANGELOG.md              # Release history
+├── TODO.md                   # Development roadmap
 ├── package.json
 ├── tsconfig.json
 └── README.md
@@ -376,10 +431,41 @@ Rate limit headers are tracked and logged with each request.
 
 ## Security
 
-- **Basic Auth**: Every request requires valid username and API key
-- **Instance Header**: `X-Instance-Name` header required for all API calls
-- **Credential Storage**: All credentials via environment variables
-- **Input Validation**: Zod schemas validate all tool inputs
+- **Basic Auth**: Every Raynet API request uses username + API key
+- **Bearer Token Auth**: HTTP transport protected by `MCP_API_KEY` environment variable
+- **Instance Header**: `X-Instance-Name` header sent with every API call
+- **Credential Storage**: All credentials via environment variables (never hardcoded)
+- **Input Validation**: Zod schemas validate all tool inputs before API calls
+- **Log Redaction**: Sensitive fields (API keys, tokens, passwords) automatically redacted from logs
+
+## HTTP Transport
+
+For remote deployment (Railway, n8n, Telegram bots), the server provides an HTTP/JSON-RPC transport:
+
+```bash
+# Set authentication token
+export MCP_API_KEY=your-secret-bearer-token
+
+# Start HTTP server
+npm start
+```
+
+**Endpoints:**
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/` | No | Server info (version, tool count) |
+| `GET` | `/health` | No | Health check |
+| `POST` | `/mcp` | Bearer | MCP JSON-RPC endpoint |
+| `DELETE` | `/mcp` | Bearer | Session cleanup |
+
+**Example request:**
+```bash
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer your-secret-bearer-token" \
+  -d '{"jsonrpc":"2.0","method":"tools/list","id":1}'
+```
 
 ## Development
 
@@ -387,38 +473,36 @@ Rate limit headers are tracked and logged with each request.
 # Build the project
 npm run build
 
-# Run comprehensive integration tests
-npx tsx tests/integration/comprehensive-test.ts
+# Run unit tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
 
 # Type check
-npx tsc --noEmit
+npm run type-check
+
+# Lint
+npm run lint
+
+# Format code
+npm run format
 ```
 
 ## Testing
 
-The project includes a comprehensive integration test suite that validates all 91 MCP tools.
+```bash
+# Unit tests (Vitest)
+npm test
 
-**Test Results (2026-01-26):**
-- Total Tests: 90 test invocations
-- Pass Rate: 100% (90/90 passing)
-- Test Duration: ~180 seconds
-- Coverage: All 91 unique MCP tools tested
+# With coverage
+npm run test:coverage
 
-**Test Breakdown:**
-| Category | Tests | Status |
-|----------|-------|--------|
-| Enum Tools | 8/8 | Passing |
-| Company Tools | 11/11 | Passing |
-| Contact Tools | 12/12 | Passing |
-| Product Tools | 7/7 | Passing |
-| Deal Tools | 8/8 | Passing |
-| Offer Tools | 9/9 | Passing |
-| Sales Order Tools | 10/10 | Passing |
-| Project Tools | 8/8 | Passing |
-| Lead Tools | 9/9 | Passing |
-| Activity Tools | 8/8 | Passing |
+# Integration tests (requires Raynet credentials)
+npm run test:integration
+```
 
-See [docs/TEST_REPORT.md](docs/TEST_REPORT.md) for detailed test results.
+See [docs/TEST_REPORT.md](docs/TEST_REPORT.md) for detailed integration test results.
 
 ## Troubleshooting
 

@@ -36,6 +36,7 @@ const ServerConfigSchema = z.object({
   nodeEnv: z.enum(['development', 'production', 'test']).default('development'),
   logLevel: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   logFormat: z.enum(['json', 'pretty']).default('pretty'),
+  toolMode: z.enum(['full', 'mobile']).default('mobile'),
 });
 
 // ============================================================================
@@ -75,6 +76,7 @@ function loadServerConfig(): ServerConfig {
     nodeEnv: (process.env['NODE_ENV'] ?? 'development') as ServerConfig['nodeEnv'],
     logLevel: (process.env['LOG_LEVEL'] ?? 'info') as ServerConfig['logLevel'],
     logFormat: (process.env['LOG_FORMAT'] ?? 'pretty') as ServerConfig['logFormat'],
+    toolMode: (process.env['TOOL_MODE'] ?? 'mobile') as ServerConfig['toolMode'],
   };
 
   return ServerConfigSchema.parse(config);
