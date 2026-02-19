@@ -21,9 +21,10 @@ const ActivityPrioritySchema = z.enum(['LOW', 'DEFAULT', 'HIGH']);
 export const ListActivitiesSchema = z.object({
   limit: z.number().int().min(1).max(100).optional().default(20),
   offset: z.number().int().min(0).optional().default(0),
-  companyId: z.number().int().positive().optional(),
-  contactId: z.number().int().positive().optional(),
-  dealId: z.number().int().positive().optional(),
+  // nullish() = optional() + nullable() — LLMs sometimes send null instead of omitting
+  companyId: z.number().int().positive().nullish(),
+  contactId: z.number().int().positive().nullish(),
+  dealId: z.number().int().positive().nullish(),
   status: ActivityStatusSchema.optional(),
 });
 
@@ -41,9 +42,10 @@ export const GetActivitySchema = z.object({
 export const CreateActivitySchema = z.object({
   type: ActivityTypeSchema,
   title: z.string().min(1, 'Tytuł aktywności jest wymagany'),
-  companyId: z.number().int().positive().optional(),
-  contactId: z.number().int().positive().optional(),
-  dealId: z.number().int().positive().optional(),
+  // nullish() = optional() + nullable() — LLMs sometimes send null instead of omitting
+  companyId: z.number().int().positive().nullish(),
+  contactId: z.number().int().positive().nullish(),
+  dealId: z.number().int().positive().nullish(),
   scheduledFrom: z.string().min(1, 'Data rozpoczęcia jest wymagana'),
   scheduledTill: z.string().min(1, 'Data zakończenia jest wymagana'),
   description: z.string().optional(),
@@ -453,7 +455,13 @@ export async function handleListActivities(
   try {
     const input = ListActivitiesSchema.parse(args);
     const service = getActivitiesService();
-    const result = await service.list(input);
+    // Normalize null → undefined (LLMs sometimes send null for optional numeric fields)
+    const result = await service.list({
+      ...input,
+      companyId: input.companyId ?? undefined,
+      contactId: input.contactId ?? undefined,
+      dealId: input.dealId ?? undefined,
+    });
 
     if (result.activities.length === 0) {
       return {
@@ -577,7 +585,13 @@ export async function handleCreateActivity(
   try {
     const input = CreateActivitySchema.parse(args);
     const service = getActivitiesService();
-    const result = await service.create(input);
+    // Normalize null → undefined (LLMs sometimes send null for optional numeric fields)
+    const result = await service.create({
+      ...input,
+      companyId: input.companyId ?? undefined,
+      contactId: input.contactId ?? undefined,
+      dealId: input.dealId ?? undefined,
+    });
 
     return {
       content: [
