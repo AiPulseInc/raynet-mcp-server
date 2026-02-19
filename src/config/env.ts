@@ -37,6 +37,7 @@ const ServerConfigSchema = z.object({
   logLevel: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
   logFormat: z.enum(['json', 'pretty']).default('pretty'),
   toolMode: z.enum(['full', 'mobile']).default('mobile'),
+  defaultOwnerId: z.number().int().positive().optional(),
 });
 
 // ============================================================================
@@ -49,6 +50,14 @@ function parseNumber(value: string | undefined, defaultValue: number): number {
   }
   const parsed = parseInt(value, 10);
   return isNaN(parsed) ? defaultValue : parsed;
+}
+
+function parseOptionalNumber(value: string | undefined): number | undefined {
+  if (value === undefined || value === '') {
+    return undefined;
+  }
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? undefined : parsed;
 }
 
 function loadRaynetConfig(): RaynetConfig {
@@ -77,6 +86,7 @@ function loadServerConfig(): ServerConfig {
     logLevel: (process.env['LOG_LEVEL'] ?? 'info') as ServerConfig['logLevel'],
     logFormat: (process.env['LOG_FORMAT'] ?? 'pretty') as ServerConfig['logFormat'],
     toolMode: (process.env['TOOL_MODE'] ?? 'mobile') as ServerConfig['toolMode'],
+    defaultOwnerId: parseOptionalNumber(process.env['RAYNET_DEFAULT_OWNER_ID']),
   };
 
   return ServerConfigSchema.parse(config);

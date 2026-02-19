@@ -5,6 +5,7 @@
  */
 
 import { getRaynetClient, RaynetClient } from './client';
+import { getConfig } from '../config/env';
 import { logger } from '../utils/logger';
 import { NotFoundError, ValidationError } from '../utils/errors';
 import type {
@@ -151,9 +152,17 @@ export class ActivitiesService {
       logger.warn('Failed to get owner ID from tasks', { error });
     }
 
-    // Last resort: use a default value (should be configurable in production)
-    this.cachedOwnerId = 1;
-    return this.cachedOwnerId;
+    // Last resort: use RAYNET_DEFAULT_OWNER_ID if configured
+    const config = getConfig();
+    const defaultId = config.server.defaultOwnerId;
+    if (defaultId) {
+      logger.warn('Using RAYNET_DEFAULT_OWNER_ID as fallback owner', { defaultId });
+      this.cachedOwnerId = defaultId;
+      return this.cachedOwnerId;
+    }
+
+    logger.error('Cannot determine activity owner — no companies, no tasks, no RAYNET_DEFAULT_OWNER_ID set');
+    throw new Error('Nie można określić właściciela aktywności. Ustaw zmienną RAYNET_DEFAULT_OWNER_ID.');
   }
 
   /**
@@ -189,28 +198,30 @@ export class ActivitiesService {
 
     const types: ActivityType[] = ['Task', 'PhoneCall', 'Meeting', 'Email'];
 
-    for (const type of types) {
-      const params: ActivityQueryParams = {
-        limit: 100, // Fetch more to filter later
-        offset: 0,
-      };
+    const params: ActivityQueryParams = {
+      limit: 100, // Fetch more to filter later
+      offset: 0,
+    };
 
-      if (status) params.status = status;
-      // Raynet API uses companyContextFilter for filtering activities by company
-      if (companyId) params['companyContextFilter'] = companyId;
-      if (contactId) params['personContextFilter'] = contactId;
-      if (dealId) params['businessCaseContextFilter'] = dealId;
+    if (status) params.status = status;
+    // Raynet API uses companyContextFilter for filtering activities by company
+    if (companyId) params['companyContextFilter'] = companyId;
+    if (contactId) params['personContextFilter'] = contactId;
+    if (dealId) params['businessCaseContextFilter'] = dealId;
 
-      try {
-        const response = await this.client.getList<RaynetActivity>(
-          `${this.getEndpoint(type)}/`,
-          params
-        );
-        allActivities.push(...response.data);
-        totalCount += response.totalCount;
-      } catch (error) {
-        logger.warn(`Failed to fetch ${type} activities`, { error });
-      }
+    const results = await Promise.all(
+      types.map(type =>
+        this.client.getList<RaynetActivity>(`${this.getEndpoint(type)}/`, params)
+          .catch(error => {
+            logger.warn(`Failed to fetch ${type} activities`, { error });
+            return { data: [] as RaynetActivity[], totalCount: 0 };
+          })
+      )
+    );
+
+    for (const result of results) {
+      allActivities.push(...result.data);
+      totalCount += result.totalCount;
     }
 
     // Sort by scheduled date (newest first)
@@ -289,17 +300,19 @@ export class ActivitiesService {
 
     const types: ActivityType[] = ['Task', 'PhoneCall', 'Meeting', 'Email'];
 
-    for (const type of types) {
-      try {
-        const response = await this.client.getList<RaynetActivity>(
-          `${this.getEndpoint(type)}/`,
-          { fulltext: query, limit: 50 }
-        );
-        allActivities.push(...response.data);
-        totalCount += response.totalCount;
-      } catch (error) {
-        logger.warn(`Failed to search ${type} activities`, { error });
-      }
+    const results = await Promise.all(
+      types.map(type =>
+        this.client.getList<RaynetActivity>(`${this.getEndpoint(type)}/`, { fulltext: query, limit: 50 })
+          .catch(error => {
+            logger.warn(`Failed to search ${type} activities`, { error });
+            return { data: [] as RaynetActivity[], totalCount: 0 };
+          })
+      )
+    );
+
+    for (const result of results) {
+      allActivities.push(...result.data);
+      totalCount += result.totalCount;
     }
 
     // Sort by scheduled date
@@ -692,21 +705,25 @@ export class ActivitiesService {
 
     const types: ActivityType[] = ['Task', 'PhoneCall', 'Meeting', 'Email'];
 
-    for (const type of types) {
-      try {
-        const response = await this.client.getList<RaynetActivity>(
-          `${this.getEndpoint(type)}/`,
-          {
-            'scheduledFrom[GE]': startOfDay.toISOString().split('T')[0],
-            'scheduledFrom[LT]': endOfDay.toISOString().split('T')[0],
-            limit: 100,
-          }
-        );
-        allActivities.push(...response.data);
-        totalCount += response.totalCount;
-      } catch (error) {
-        logger.warn(`Failed to fetch today's ${type} activities`, { error });
-      }
+    const todayParams = {
+      'scheduledFrom[GE]': startOfDay.toISOString().split('T')[0],
+      'scheduledFrom[LT]': endOfDay.toISOString().split('T')[0],
+      limit: 100,
+    };
+
+    const results = await Promise.all(
+      types.map(type =>
+        this.client.getList<RaynetActivity>(`${this.getEndpoint(type)}/`, todayParams)
+          .catch(error => {
+            logger.warn(`Failed to fetch today's ${type} activities`, { error });
+            return { data: [] as RaynetActivity[], totalCount: 0 };
+          })
+      )
+    );
+
+    for (const result of results) {
+      allActivities.push(...result.data);
+      totalCount += result.totalCount;
     }
 
     // Sort by time
@@ -735,21 +752,25 @@ export class ActivitiesService {
 
     const types: ActivityType[] = ['Task', 'PhoneCall', 'Meeting', 'Email'];
 
-    for (const type of types) {
-      try {
-        const response = await this.client.getList<RaynetActivity>(
-          `${this.getEndpoint(type)}/`,
-          {
-            status: 'SCHEDULED',
-            'scheduledTill[LT]': now.toISOString().split('T')[0],
-            limit: 100,
-          }
-        );
-        allActivities.push(...response.data);
-        totalCount += response.totalCount;
-      } catch (error) {
-        logger.warn(`Failed to fetch overdue ${type} activities`, { error });
-      }
+    const overdueParams = {
+      status: 'SCHEDULED',
+      'scheduledTill[LT]': now.toISOString().split('T')[0],
+      limit: 100,
+    };
+
+    const results = await Promise.all(
+      types.map(type =>
+        this.client.getList<RaynetActivity>(`${this.getEndpoint(type)}/`, overdueParams)
+          .catch(error => {
+            logger.warn(`Failed to fetch overdue ${type} activities`, { error });
+            return { data: [] as RaynetActivity[], totalCount: 0 };
+          })
+      )
+    );
+
+    for (const result of results) {
+      allActivities.push(...result.data);
+      totalCount += result.totalCount;
     }
 
     // Sort by date (oldest first - most overdue)

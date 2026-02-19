@@ -13,6 +13,7 @@ console.log('[STARTUP] NODE_ENV env:', process.env.NODE_ENV);
 
 import express, { Request, Response, NextFunction } from 'express';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { randomUUID, timingSafeEqual } from 'crypto';
 import { loadConfig, validateConfig } from './config/env';
 import { logger } from './utils/logger';
@@ -25,7 +26,7 @@ import { VERSION, APP_NAME } from './version';
 // ============================================================================
 
 const MCP_API_KEY = process.env.MCP_API_KEY || '';
-const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '';
 
 /**
  * Bearer token authentication middleware
@@ -255,7 +256,7 @@ app.use(express.json({ limit: '1mb' }));
 
 // CORS for n8n and other external clients (configurable via CORS_ORIGIN env var)
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', CORS_ORIGIN);
+  res.header('Access-Control-Allow-Origin', CORS_ORIGIN || 'null');
   res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Mcp-Session-Id, Accept');
   res.header('Access-Control-Expose-Headers', 'Mcp-Session-Id');
@@ -264,6 +265,20 @@ app.use((req, res, next) => {
     return;
   }
   next();
+});
+
+// Rate limiter — 120 requests per minute per IP (exempt: /health)
+const mcpRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    jsonrpc: '2.0',
+    id: null,
+    error: { code: -32000, message: 'Zbyt wiele żądań. Spróbuj ponownie za chwilę.' },
+  },
+  skip: (req) => req.path === '/health',
 });
 
 // Health check endpoint
@@ -293,7 +308,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // MCP endpoint - handles JSON-RPC over HTTP (requires authentication)
-app.post('/mcp', authenticateBearer, async (req: Request, res: Response) => {
+app.post('/mcp', mcpRateLimiter, authenticateBearer, async (req: Request, res: Response) => {
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
 
   logger.info('MCP request received', {
@@ -365,7 +380,7 @@ app.post('/mcp', authenticateBearer, async (req: Request, res: Response) => {
 });
 
 // Handle DELETE for session cleanup (MCP spec) (requires authentication)
-app.delete('/mcp', authenticateBearer, (req: Request, res: Response) => {
+app.delete('/mcp', mcpRateLimiter, authenticateBearer, (req: Request, res: Response) => {
   const sessionId = req.headers['mcp-session-id'] as string | undefined;
 
   if (sessionId && sessions.has(sessionId)) {
@@ -414,6 +429,13 @@ async function startHTTPServer(): Promise<void> {
   if (!MCP_API_KEY && config.server.nodeEnv === 'production') {
     logger.error('MCP_API_KEY is required in production mode. Set MCP_API_KEY environment variable.');
     throw new Error('MCP_API_KEY is required in production mode');
+  }
+
+  // Warn about unrestricted CORS in production
+  if (config.server.nodeEnv === 'production' && (!CORS_ORIGIN || CORS_ORIGIN === '*')) {
+    logger.warn(
+      'CORS_ORIGIN is not restricted. Set CORS_ORIGIN env var to your client origin in production.'
+    );
   }
 
   // Start HTTP server

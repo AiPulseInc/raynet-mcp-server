@@ -4,6 +4,25 @@
 
 import { getConfig } from '../config/env';
 
+// ============================================================================
+// Static imports (used internally for dispatch map and fullToolDefinitions)
+// ============================================================================
+
+import { companyToolDefinitions, handleCompanyTool } from './companies';
+import { contactToolDefinitions, handleContactTool } from './contacts';
+import { dealToolDefinitions, handleDealTool } from './deals';
+import { activityToolDefinitions, handleActivityTool } from './activities';
+import { leadToolDefinitions, handleLeadTool } from './leads';
+import { enumToolDefinitions, handleEnumTool } from './enums';
+import { productToolDefinitions, handleProductTool } from './products';
+import { offerToolDefinitions, handleOfferTool } from './offers';
+import { salesOrderToolDefinitions, handleSalesOrderTool } from './salesOrders';
+import { projectToolDefinitions, handleProjectTool } from './projects';
+
+// ============================================================================
+// Re-exports for consumers of this module
+// ============================================================================
+
 // Company tools
 export {
   companyToolDefinitions,
@@ -155,7 +174,11 @@ export {
   handleRemoveProjectParticipant,
 } from './projects';
 
-// Mobile tool names — 25 essential tools for field sales reps
+// ============================================================================
+// Tool Definitions (full set, built from static imports)
+// ============================================================================
+
+/** Mobile tool names — 25 essential tools for field sales reps */
 const mobileToolNames = new Set([
   // Companies (3)
   'raynet_search_companies',
@@ -192,21 +215,45 @@ const mobileToolNames = new Set([
   'raynet_get_all_enums',
 ]);
 
-// All tool definitions (full set)
+/** All tool definitions — built from static imports only */
 const fullToolDefinitions = [
-  ...require('./companies').companyToolDefinitions,
-  ...require('./contacts').contactToolDefinitions,
-  ...require('./deals').dealToolDefinitions,
-  ...require('./activities').activityToolDefinitions,
-  ...require('./leads').leadToolDefinitions,
-  ...require('./enums').enumToolDefinitions,
-  ...require('./products').productToolDefinitions,
-  ...require('./offers').offerToolDefinitions,
-  ...require('./salesOrders').salesOrderToolDefinitions,
-  ...require('./projects').projectToolDefinitions,
+  ...companyToolDefinitions,
+  ...contactToolDefinitions,
+  ...dealToolDefinitions,
+  ...activityToolDefinitions,
+  ...leadToolDefinitions,
+  ...enumToolDefinitions,
+  ...productToolDefinitions,
+  ...offerToolDefinitions,
+  ...salesOrderToolDefinitions,
+  ...projectToolDefinitions,
 ];
 
-// Export tool definitions based on TOOL_MODE env variable
+// ============================================================================
+// Tool Dispatch Map (pre-computed at module load — O(1) lookup per call)
+// ============================================================================
+
+type ToolHandler = (toolName: string, args: unknown) => Promise<{ content: Array<{ type: 'text'; text: string }> }>;
+
+/** Maps every tool name to its domain handler, built once at startup */
+const toolDispatch = new Map<string, ToolHandler>();
+
+for (const tool of companyToolDefinitions)    toolDispatch.set(tool.name, handleCompanyTool);
+for (const tool of contactToolDefinitions)    toolDispatch.set(tool.name, handleContactTool);
+for (const tool of dealToolDefinitions)       toolDispatch.set(tool.name, handleDealTool);
+for (const tool of activityToolDefinitions)   toolDispatch.set(tool.name, handleActivityTool);
+for (const tool of leadToolDefinitions)       toolDispatch.set(tool.name, handleLeadTool);
+for (const tool of enumToolDefinitions)       toolDispatch.set(tool.name, handleEnumTool);
+for (const tool of productToolDefinitions)    toolDispatch.set(tool.name, handleProductTool);
+for (const tool of offerToolDefinitions)      toolDispatch.set(tool.name, handleOfferTool);
+for (const tool of salesOrderToolDefinitions) toolDispatch.set(tool.name, handleSalesOrderTool);
+for (const tool of projectToolDefinitions)    toolDispatch.set(tool.name, handleProjectTool);
+
+// ============================================================================
+// Public API
+// ============================================================================
+
+/** Return tool definitions filtered by TOOL_MODE */
 export function getToolDefinitions(): typeof fullToolDefinitions {
   try {
     const config = getConfig();
@@ -219,95 +266,24 @@ export function getToolDefinitions(): typeof fullToolDefinitions {
   return fullToolDefinitions;
 }
 
-// Backward-compatible export (lazy getter)
+/** Backward-compatible export */
 export const allToolDefinitions = fullToolDefinitions;
 
-// Tool handler router
+/** Route a tool call to the correct domain handler via pre-computed Map */
 export async function handleTool(
   toolName: string,
   args: unknown
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
-  // Company tools (including addresses)
-  if (toolName.startsWith('raynet_') && (toolName.includes('compan') || toolName.includes('address'))) {
-    const { handleCompanyTool } = require('./companies');
-    return handleCompanyTool(toolName, args);
+  const handler = toolDispatch.get(toolName);
+  if (!handler) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: `Nieznane narzędzie: ${toolName}`,
+        },
+      ],
+    };
   }
-
-  // Contact tools (including relationships)
-  if (toolName.startsWith('raynet_') && (toolName.includes('contact') || toolName.includes('relationship'))) {
-    const { handleContactTool } = require('./contacts');
-    return handleContactTool(toolName, args);
-  }
-
-  // Link tool (special case)
-  if (toolName === 'raynet_link_contact_to_company') {
-    const { handleLinkContactToCompany } = require('./contacts');
-    return handleLinkContactToCompany(args);
-  }
-
-  // Deal tools
-  if (toolName.startsWith('raynet_') && (toolName.includes('deal') || toolName.includes('pipeline'))) {
-    const { handleDealTool } = require('./deals');
-    return handleDealTool(toolName, args);
-  }
-
-  // Activity tools
-  if (toolName.startsWith('raynet_') && (toolName.includes('activit') || toolName.includes('today') || toolName.includes('overdue'))) {
-    const { handleActivityTool } = require('./activities');
-    return handleActivityTool(toolName, args);
-  }
-
-  // Lead tools
-  if (toolName.startsWith('raynet_') && (toolName.includes('lead') || toolName.includes('convert'))) {
-    const { handleLeadTool } = require('./leads');
-    return handleLeadTool(toolName, args);
-  }
-
-  // Product tools
-  if (toolName.startsWith('raynet_') && toolName.includes('product')) {
-    const { handleProductTool } = require('./products');
-    return handleProductTool(toolName, args);
-  }
-
-  // Offer tools
-  if (toolName.startsWith('raynet_') && toolName.includes('offer')) {
-    const { handleOfferTool } = require('./offers');
-    return handleOfferTool(toolName, args);
-  }
-
-  // Sales Order tools
-  if (toolName.startsWith('raynet_') && toolName.includes('sales_order')) {
-    const { handleSalesOrderTool } = require('./salesOrders');
-    return handleSalesOrderTool(toolName, args);
-  }
-
-  // Project tools
-  if (toolName.startsWith('raynet_') && (toolName.includes('project') || toolName.includes('participant'))) {
-    const { handleProjectTool } = require('./projects');
-    return handleProjectTool(toolName, args);
-  }
-
-  // Enum tools
-  if (toolName.startsWith('raynet_get_') && (
-    toolName.includes('categor') ||
-    toolName.includes('turnover') ||
-    toolName.includes('phase') ||
-    toolName.includes('source') ||
-    toolName.includes('currenc') ||
-    toolName.includes('enum') ||
-    toolName.includes('status')
-  )) {
-    const { handleEnumTool } = require('./enums');
-    return handleEnumTool(toolName, args);
-  }
-
-  // Unknown tool
-  return {
-    content: [
-      {
-        type: 'text',
-        text: `Nieznane narzędzie: ${toolName}`,
-      },
-    ],
-  };
+  return handler(toolName, args);
 }

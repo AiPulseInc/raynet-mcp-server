@@ -27,6 +27,7 @@ export interface ServerConfig {
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   logFormat: 'json' | 'pretty';
   toolMode: ToolMode;
+  defaultOwnerId?: number;
 }
 
 export interface AppConfig {
