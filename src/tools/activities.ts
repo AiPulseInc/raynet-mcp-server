@@ -597,7 +597,7 @@ export async function handleCreateActivity(
       content: [
         {
           type: 'text',
-          text: `✅ Aktywność została utworzona pomyślnie!\n\n${formatActivity(result.activity)}`,
+          text: `✅ Aktywność została utworzona pomyślnie!\n\n${formatActivity(result.activity)}\n\n[SYSTEM] Do późniejszych aktualizacji lub oznaczania jako zakończone (np. w raynet_complete_activity), MUSISZ UŻYĆ dokładnie tych wartości:\n- activityId: ${result.activity.id}\n- activityType: "${input.type}"\nUWAGA: Nie wyszukuj tej aktywności za pomocą raynet_search_activities zaraz po utworzeniu, ponieważ indeksowanie wyszukiwarki w CRM może zająć kilka minut.`,
         },
       ],
     };
