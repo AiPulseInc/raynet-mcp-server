@@ -535,7 +535,11 @@ function formatCompany(company: RaynetCompany): string {
   ];
 
   if (company.regNumber) {
-    lines.push(`- NIP/REGON: ${company.regNumber}`);
+    lines.push(`- Nr Rejestracyjny (REGON/KRS): ${company.regNumber}`);
+  }
+
+  if (company.taxNumber) {
+    lines.push(`- NIP (Tax ID): ${company.taxNumber}`);
   }
 
   if (company.primaryAddress?.contactInfo?.email) {
